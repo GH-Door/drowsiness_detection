@@ -35,6 +35,7 @@ class PipelineConfig:
         brighten_beta: 밝기 보정 밝기 (0~100)
         use_pose_fallback: face_detected=False 시 Pose로 고개 숙임 감지
         pose_conf: MediaPipe Pose 검출 신뢰도 임계값
+        pose_consec_frames: Pose 고개 숙임 연속 프레임 수 (기본 90 → ~3초 @ 30fps)
         ear_threshold: EAR 졸음 임계값
         ear_consec_frames: EAR 연속 프레임 수
         mar_threshold: MAR 하품 임계값
@@ -49,6 +50,7 @@ class PipelineConfig:
     brighten_beta: float = 30.0
     use_pose_fallback: bool = False
     pose_conf: float = 0.5
+    pose_consec_frames: int = 90
     ear_threshold: float = 0.20
     ear_consec_frames: int = 15
     mar_threshold: float = 0.50
@@ -91,6 +93,7 @@ class StudentPipeline:
                 mar_consec_frames=self._cfg.mar_consec_frames,
                 departed_sec=self._cfg.departed_sec,
                 use_pose_fallback=self._cfg.use_pose_fallback,
+                pose_consec_frames=self._cfg.pose_consec_frames,
             )
         return self._analyzers[bbox_key]
 
