@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+*Icon
 
 # macOS
 .DS_Store
@@ -49,3 +50,6 @@ wandb/
 
 # jupyter
 jupyter/
+
+# output
+outputs/
