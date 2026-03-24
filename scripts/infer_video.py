@@ -541,6 +541,10 @@ def run_inference(
     teacher_names: Optional[list[str]] = None,
     start_sec: float = 0.0,
     end_sec: Optional[float] = None,
+    yolo_model=None,
+    use_onnx: bool = False,
+    onnx_path: str | Path | None = None,
+    device: str | None = None,
 ):
     """
     졸음 감지 파이프라인을 실행합니다.
@@ -579,7 +583,24 @@ def run_inference(
     
     assert Path(input_path).exists(), f"입력 영상 없음: {input_path}"
 
-    yolo_model = YOLO(checkpoint_str)
+    # device 자동 감지: cuda > mps > cpu 순
+    if device is None:
+        import torch
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
+    if yolo_model is None:
+        if use_onnx:
+            load_path = str(onnx_path) if onnx_path else str(checkpoint).replace(".pt", ".onnx")
+            yolo_model = YOLO(load_path)
+            print(f"[device] cpu (ONNX Runtime)")
+        else:
+            yolo_model = YOLO(checkpoint_str)
+            yolo_model.to(device)
+            print(f"[device] {device}")
 
     config = PipelineConfig(
         # [OCR] teacher_names=teacher_names or ["강경미"],
