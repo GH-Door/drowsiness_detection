@@ -98,7 +98,7 @@ class PipelineConfig:
     target_fps: float = 10.0
 
     # YOLO
-    yolo_imgsz: int = 960 # 640 Test > 960 > 1280
+    yolo_imgsz: int = 640 # 640 Test > 960 > 1280
     yolo_conf: float = 0.10
     yolo_iou: float = 0.45
     yolo_max_det: int = 5 # 20 -> 5 수정
