@@ -23,7 +23,8 @@ class SlotInfo:
     is_teacher: bool
     ear: float
     mar: float
-    box_pct: tuple = field(default_factory=lambda: (0.0, 0.0, 0.0, 0.0))  # (x1%, y1%, x2%, y2%)
+    box_pct: tuple = field(default_factory=lambda: (0.0, 0.0, 0.0, 0.0))  # (x1%, y1%, x2%, y2%) YOLO bbox
+    face_box_pct: tuple = field(default_factory=lambda: ())               # (x1%, y1%, x2%, y2%) FaceMesh face, empty if none
     noface: bool = False
 
 
@@ -67,7 +68,7 @@ def _select_device() -> int | str:
 class LiveZoomEngine:
     """ZoomPipeline을 실시간 Gradio 추론에 사용하는 엔진."""
 
-    def __init__(self, checkpoint_path: str | Path, fps: float = 5.0):
+    def __init__(self, checkpoint_path: str | Path, fps: float = 7.0):
         self.fps = fps
         self._checkpoint_path = str(checkpoint_path)
 
@@ -78,8 +79,6 @@ class LiveZoomEngine:
         self._config = PipelineConfig(
             target_fps=fps,
             device=device,
-            ocr_retry_interval=30,   # 90 → 30: 6초마다 재시도 (fps=5 기준)
-            ocr_fast_interval=5,     # 20 → 5: 시작 직후 1초마다
         )
         self._pipeline: Optional[ZoomPipeline] = None
         self._open_pipeline()
@@ -150,7 +149,26 @@ class LiveZoomEngine:
             if not bool(r.get("is_teacher", 0)) and (bw < MIN_BBOX_W or bh < MIN_BBOX_H):
                 status = "NORMAL"
 
-            noface = not bool(r.get("lm_ok", 1)) and not bool(r.get("face_ok", 1))
+            # NoFace = person_on(몸 있음) + FaceMesh 실패
+            # person_off / screen_off / ABSENT 는 NoFace가 아닌 이탈로 취급
+            cls_name = r.get("cls_name", "")
+            is_body_present = cls_name not in ("person_off", "screen_off") and status != "ABSENT"
+            noface = is_body_present and (
+                bool(r.get("is_noface", False)) or (
+                    not bool(r.get("lm_ok", 1)) and not bool(r.get("face_ok", 1))
+                )
+            )
+
+            # face_box는 썸네일 내부 좌표 → 프레임 절대 좌표로 변환 후 비율화
+            raw_fb = r.get("face_box")
+            if raw_fb and len(raw_fb) == 4:
+                fb_x1 = x1 + raw_fb[0]
+                fb_y1 = y1 + raw_fb[1]
+                fb_x2 = x1 + raw_fb[2]
+                fb_y2 = y1 + raw_fb[3]
+                face_box_pct = (fb_x1 / frame_w, fb_y1 / frame_h, fb_x2 / frame_w, fb_y2 / frame_h)
+            else:
+                face_box_pct = ()
 
             slots.append(SlotInfo(
                 slot_id=r["slot_id"],
@@ -161,6 +179,7 @@ class LiveZoomEngine:
                 ear=ear if not (isinstance(ear, float) and np.isnan(ear)) else 0.0,
                 mar=mar if not (isinstance(mar, float) and np.isnan(mar)) else 0.0,
                 box_pct=box_pct,
+                face_box_pct=face_box_pct,
                 noface=noface,
             ))
 

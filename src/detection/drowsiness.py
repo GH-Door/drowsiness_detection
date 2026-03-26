@@ -57,8 +57,8 @@ class DrowsinessConfig:
     # mar_ratio: 기준선 대비 여유 확보 1.50 (기존 1.30)
     # mar_hold_sec: PMC 2024 — 하품 최소 지속 2초 (DROWSY 복합 조건용)
     # mar_yawn_sec: YAWN 독립 상태 진입 시간 (moon/eda 방식, 0.3초 빠른 감지)
-    mar_init_abs: float = 0.50
-    mar_ratio: float = 1.50
+    mar_init_abs: float = 0.35
+    mar_ratio: float = 1.20
     mar_hold_sec: float = 2.0
     mar_yawn_sec: float = 0.3   # YAWN 상태 전환 최소 지속 시간
 
@@ -90,7 +90,7 @@ class DrowsinessConfig:
     recover_sec: float = 0.5          # 1.5 → 0.5: 눈 뜨면 0.5초만에 NORMAL 복귀
     absent_hold_sec: float = 0.8
     absent_recover_sec: float = 0.5
-    smooth_window_sec: float = 0.4    # 0.7 → 0.4: 상태 전환 딜레이 축소
+    smooth_window_sec: float = 1.0    # 0.4 → 1.0: FaceMesh 간헐 실패 시 상태 안정화
 
     # PERCLOS+pitch 조건: 현재 EAR이 이 비율 이상이면 발동 차단
     # → 과거 PERCLOS 누적값이 있어도 현재 눈을 충분히 뜨고 있으면 DROWSY 방지

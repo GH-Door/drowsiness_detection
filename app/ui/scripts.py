@@ -149,12 +149,15 @@ def build_head_script() -> str:
 
     // ── bbox 오버레이 렌더링 ────────────────────────────────────────────────────
 
+    // infer_video.py STATE_COLORS (BGR→RGB 변환) 기준
     const BBOX_COLORS = {{
-        NORMAL: "rgba(34, 197, 94, 0.90)",
-        DROWSY: "rgba(239, 68, 68, 0.95)",
-        YAWN:   "rgba(245, 158, 11, 0.90)",
-        ABSENT: "rgba(239, 68, 68, 0.95)",
+        NORMAL: "rgba(70,  220, 70,  0.90)",
+        DROWSY: "rgba(255, 0,   0,   0.95)",
+        YAWN:   "rgba(255, 128, 0,   0.90)",
+        ABSENT: "rgba(255, 165, 0,   0.95)",
+        IGNORE: "rgba(160, 160, 160, 0.85)",
     }};
+    const NOFACE_COLOR = "rgba(160, 160, 160, 0.85)";
 
     const STATUS_KO = {{
         NORMAL: "정상", DROWSY: "졸음", YAWN: "하품", ABSENT: "이탈",
@@ -186,17 +189,18 @@ def build_head_script() -> str:
             const h = (y2p - y1p) * rect.height;
             if (w < 4 || h < 4) continue;
 
-            const color = BBOX_COLORS[s.status] || BBOX_COLORS.NORMAL;
-            const lw = s.status === "DROWSY" || s.status === "ABSENT" ? 3 : 2;
+            // infer_video.py 동일 로직: noface면 status 무시, NOT FOUND 표시
+            const displayState = s.noface ? "NOT FOUND" : s.status;
+            const color = s.noface ? NOFACE_COLOR : (BBOX_COLORS[s.status] || BBOX_COLORS.NORMAL);
+            const lw = (displayState === "DROWSY" || displayState === "ABSENT") ? 3 : 2;
 
             // bbox 테두리
             ctx.strokeStyle = color;
             ctx.lineWidth   = lw;
             ctx.strokeRect(x, y, w, h);
 
-            // 상단 안쪽 라벨: "ID{{n}}  NORMAL" 형식 (두 번째 사진처럼)
-            const statusEn = s.status;  // NORMAL / DROWSY / YAWN / ABSENT
-            const label = `ID${{s.slot_id}}  ${{statusEn}}`;
+            // 상단 안쪽 라벨: infer_video.py와 동일하게 noface면 "NOT FOUND"로 대체
+            const label = `ID${{s.slot_id}}  ${{displayState}}`;
             ctx.font = "bold 11px monospace";
             const tw = ctx.measureText(label).width;
             const lh = 17;
@@ -206,6 +210,23 @@ def build_head_script() -> str:
             ctx.fillRect(x, y, tw + 10, lh);
             ctx.fillStyle = "#fff";
             ctx.fillText(label, x + 5, y + lh - 4);
+
+            // FaceMesh face_box inner box (마젠타 점선)
+            if (s.face_box_pct && s.face_box_pct.length === 4) {{
+                const [fx1p, fy1p, fx2p, fy2p] = s.face_box_pct;
+                const fx = fx1p * rect.width;
+                const fy = fy1p * rect.height;
+                const fw = (fx2p - fx1p) * rect.width;
+                const fh = (fy2p - fy1p) * rect.height;
+                if (fw >= 4 && fh >= 4) {{
+                    ctx.save();
+                    ctx.strokeStyle = "rgba(232, 121, 249, 0.85)";
+                    ctx.lineWidth   = 1.5;
+                    ctx.setLineDash([4, 3]);
+                    ctx.strokeRect(fx, fy, fw, fh);
+                    ctx.restore();
+                }}
+            }}
         }}
     }}
 

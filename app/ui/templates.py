@@ -63,16 +63,19 @@ def build_status_panel_html(
     status_class_map = {
         "NORMAL": "status-normal",
         "DROWSY": "status-drowsy",
+        "YAWN":   "status-yawn",
         "ABSENT": "status-absent",
     }
     status_desc_map = {
         "NORMAL": "수업에 집중하고 있습니다",
         "DROWSY": "졸음이 감지되었습니다",
+        "YAWN":   "하품이 감지되었습니다",
         "ABSENT": "자리를 이탈했습니다",
     }
     status_ko_map = {
         "NORMAL": "정상",
         "DROWSY": "졸음",
+        "YAWN":   "하품",
         "ABSENT": "이탈",
     }
 

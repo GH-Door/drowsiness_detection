@@ -46,14 +46,17 @@ def _now_ts() -> datetime:
 
 
 def _status_meta(status: str) -> dict[str, str]:
+    # infer_video.py STATE_COLORS (BGR→RGB) 기준으로 통일
     normalized = (status or "NORMAL").upper()
     if normalized == "DROWSY":
-        return {"label": "졸음", "color": "#f59e0b", "bg": "rgba(245, 158, 11, 0.10)", "desc": "졸음이 감지되었습니다", "icon": "⚠"}
+        return {"label": "졸음", "color": "#ff0000", "bg": "rgba(255, 0, 0, 0.10)", "desc": "졸음이 감지되었습니다", "icon": "⚠"}
     if normalized == "YAWN":
-        return {"label": "하품", "color": "#fb923c", "bg": "rgba(251, 146, 60, 0.10)", "desc": "하품이 감지되었습니다", "icon": "○"}
+        return {"label": "하품", "color": "#ff8000", "bg": "rgba(255, 128, 0, 0.10)", "desc": "하품이 감지되었습니다", "icon": "○"}
     if normalized == "ABSENT":
-        return {"label": "이탈", "color": "#ef4444", "bg": "rgba(239, 68, 68, 0.10)", "desc": "자리를 이탈했습니다", "icon": "◌"}
-    return {"label": "정상", "color": "#10b981", "bg": "rgba(16, 185, 129, 0.10)", "desc": "수업에 집중하고 있습니다", "icon": "◉"}
+        return {"label": "이탈", "color": "#ffa500", "bg": "rgba(255, 165, 0, 0.10)", "desc": "자리를 이탈했습니다", "icon": "◌"}
+    if normalized == "IGNORE":
+        return {"label": "무시", "color": "#a0a0a0", "bg": "rgba(160, 160, 160, 0.10)", "desc": "감지 제외 상태", "icon": "—"}
+    return {"label": "정상", "color": "#46dc46", "bg": "rgba(70, 220, 70, 0.10)", "desc": "수업에 집중하고 있습니다", "icon": "◉"}
 
 
 def _make_alert(alert_type: Status, message: str) -> dict:
@@ -190,11 +193,14 @@ def _build_status_card(status: str, slots: list) -> str:
     meta = _status_meta(status)
     slot_count = len(slots)
     drowsy_count = sum(1 for s in slots if s.status == "DROWSY")
+    yawn_count   = sum(1 for s in slots if s.status == "YAWN")
     absent_count = sum(1 for s in slots if s.status == "ABSENT")
 
     summary = f"감지된 학생 {slot_count}명"
     if drowsy_count:
         summary += f" | 졸음 {drowsy_count}명"
+    if yawn_count:
+        summary += f" | 하품 {yawn_count}명"
     if absent_count:
         summary += f" | 이탈 {absent_count}명"
 
@@ -409,6 +415,7 @@ def _slots_to_json(slots) -> str:
         "ear": round(float(s.ear), 3),
         "mar": round(float(s.mar), 3),
         "box_pct": [round(v, 6) for v in s.box_pct],
+        "face_box_pct": [round(v, 6) for v in s.face_box_pct] if s.face_box_pct else [],
         "noface": s.noface,
     } for s in slots if not s.is_teacher])
 
