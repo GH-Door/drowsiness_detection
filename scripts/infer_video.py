@@ -94,7 +94,7 @@ class PipelineConfig:
     # 영상 범위
     start_sec: float = 0.0
     end_sec: Optional[float] = None
-    target_fps: float = 10.0
+    target_fps: float = 7.0
 
     # YOLO
     yolo_imgsz: int = 640 # 640 Test > 960 > 1280
@@ -124,11 +124,14 @@ class PipelineConfig:
     noface_hold_frames: int = 15    # ≈1.5초 @ 10fps
     # NoFace 폴백: 랜드마크 소실 시 최근 DROWSY 이력 참조 윈도우
     drowsy_noface_window_sec: float = 3.0
+    # NoFace 폴백 상한: 연속 NoFace 프레임이 이 값을 초과하면 DROWSY fallback 중단
+    # → 작은 썸네일처럼 FaceMesh가 영구 실패하는 경우 DROWSY 무한 고착 방지
+    noface_max_drowsy_hold: int = 30  # ≈3초 @ 10fps, ≈6초 @ 5fps
 
     # Pose fallback (FaceMesh lm_ok=False일 때 PoseDetector로 고개 숙임 감지)
     use_pose_fallback: bool = False
     pose_conf: float = 0.5          # PoseDetector 검출 최소 신뢰도
-    pose_consec_frames: int = 90    # 연속 감지 프레임 수 (≈3초 @ 30fps)
+    pose_consec_frames: int = 21    # 연속 감지 프레임 수 (≈3초 @ 7fps)
 
     # 졸음 감지 (세부 임계값)
     drowsiness: DrowsinessConfig = field(default_factory=DrowsinessConfig)
@@ -411,7 +414,10 @@ class ZoomPipeline:
             # - 최근 DROWSY 이력 + 저모션      → DROWSY 유지
             # - 이력 없음                      → NOFACE 표시
             # is_noface(15프레임 확정)와 무관하게 얼굴이 사라진 첫 프레임부터 적용
-            face_gone = not face_result.lm_ok and not face_result.face_ok
+            face_gone = (
+                not face_result.lm_ok and not face_result.face_ok
+                and det["cls"] not in ("person_off", "screen_off")
+            )
             display_noface = is_noface
             if face_gone:
                 active_motion = (
@@ -422,7 +428,7 @@ class ZoomPipeline:
                     final_state = "NORMAL"
                     sl.current_state = "NORMAL"
                     display_noface = False
-                elif recent_drowsy:
+                elif recent_drowsy and sl.noface_consec <= cfg.noface_max_drowsy_hold:
                     final_state = "DROWSY"
                     sl.current_state = "DROWSY"
                     display_noface = False
@@ -469,6 +475,7 @@ class ZoomPipeline:
                 "cls_name":      det["cls"],
                 "cls_conf":      round(det["conf"], 4),
                 "x1": x1, "y1": y1, "x2": x2, "y2": y2,
+                "face_box":      face_result.face_box,
                 "lm_ok":         int(face_result.lm_ok),
                 "face_ok":       int(face_result.face_ok),
                 "ear":           face_result.ear,
@@ -479,6 +486,39 @@ class ZoomPipeline:
                 "motion":        motion,
                 "ear_low_f":     sl.ear_low_frames,
                 "face_low_f":    sl.face_low_frames,
+                "is_noface":     display_noface,
+            })
+
+        # ── 미탐지 슬롯(화면 이탈) → ABSENT 레코드 추가 ──────────────────────────
+        for sid in um_slots:
+            sl = self._slots.get(sid)
+            if sl is None or sl.misses > cfg.slot_max_misses:
+                continue
+            x1, y1, x2, y2 = sl.box if sl.box else (0, 0, 0, 0)
+            records.append({
+                "frame_idx":     frame_idx,
+                "timestamp_s":   round(ts, 4),
+                "slot_id":       sid,
+                "name":          sl.name_final,
+                "is_teacher":    int(sl.is_teacher),
+                "final_state":   "ABSENT",
+                "raw_state":     "ABSENT",
+                "drowsy_reason": "absent_unmatched",
+                "cls_name":      "person_off",
+                "cls_conf":      0.0,
+                "x1": x1, "y1": y1, "x2": x2, "y2": y2,
+                "face_box":      None,
+                "lm_ok":         0,
+                "face_ok":       0,
+                "ear":           float("nan"),
+                "mar":           float("nan"),
+                "pitch_like":    float("nan"),
+                "tilt_deg":      float("nan"),
+                "face_center_y": float("nan"),
+                "motion":        0.0,
+                "ear_low_f":     sl.ear_low_frames,
+                "face_low_f":    sl.face_low_frames,
+                "is_noface":     True,
             })
 
         return canvas, records
@@ -595,7 +635,7 @@ def run_inference(
     input_path: str | Path = "data/video/TestVideo2.mp4",
     checkpoint: str | Path = "checkpoint/yolo11n/weights/best.pt",
     output_path: str | Path = "outputs/result.mp4",
-    fps: float = 10.0,
+    fps: float = 7.0,
     use_fallback: bool = True,
     teacher_names: Optional[list[str]] = None,
     start_sec: float = 0.0,
@@ -723,7 +763,7 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", type=str, default="checkpoint/yolo11n/best.pt", help="YOLO 모델 경로")
     parser.add_argument("--input", type=str, required=True, help="입력 영상 경로")
     parser.add_argument("--output", type=str, default="outputs/result.mp4", help="결과 영상 저장 경로")
-    parser.add_argument("--fps", type=float, default=10.0, help="분석 목표 FPS")
+    parser.add_argument("--fps", type=float, default=7.0, help="분석 목표 FPS")
     parser.add_argument("--use_fallback", action="store_true", help="Pose fallback 활성화 여부")
     parser.add_argument("--teacher", type=str, default="강경미", help="강사 이름 (쉼표로 구분)")
 
