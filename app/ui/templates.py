@@ -2,13 +2,13 @@ import html
 from pathlib import Path
 from typing import Any
 
-from app.config import APP_SUBTITLE, APP_TITLE
+from app.config import APP_TITLE
 
 
 def _action_button_html(target_id: str, label: str, tone: str = "secondary") -> str:
     return (
         f'<button class="shell-action shell-action-{tone}" '
-        f'onclick="clickHiddenButton(\'{target_id}\')">{html.escape(label)}</button>'
+        f"onclick=\"clickHiddenButton('{target_id}')\">{html.escape(label)}</button>"
     )
 
 
@@ -32,9 +32,7 @@ def build_shell_header_html(
         if action_target and action_label
         else ""
     )
-    badge_html = (
-        f'<div class="shell-badge">{html.escape(badge)}</div>' if badge else ""
-    )
+    badge_html = f'<div class="shell-badge">{html.escape(badge)}</div>' if badge else ""
     return f"""
     <section class="shell-header">
         <div class="shell-header-main">
@@ -58,12 +56,13 @@ def build_home_hero_html() -> str:
     <section class="home-hero">
         <div class="home-bg home-bg-blue"></div>
         <div class="home-bg home-bg-violet"></div>
+
         <div class="hero-badge">
             <span class="hero-badge-icon">📡</span>
             <span>AI-Powered Monitoring System</span>
         </div>
+
         <h1>{APP_TITLE}</h1>
-        <p>{APP_SUBTITLE}</p>
         <div class="hero-note">
             온라인 수업에서 졸음 및 이탈 상태를 실시간으로 모니터링합니다
         </div>
@@ -94,17 +93,31 @@ def build_home_card_html(
         """
         for feature_title, feature_desc, feature_icon in features
     )
+
     return f"""
     <article class="mode-card mode-card-{html.escape(tone)}" onclick="clickHiddenButton('{target_id}')">
         <div class="mode-card-icon">{html.escape(icon)}</div>
+
         <div class="mode-card-copy">
-            <div class="mode-card-subtitle">{html.escape(subtitle)}</div>
             <h2>{html.escape(title)}</h2>
+            <div class="mode-card-subtitle">{html.escape(subtitle)}</div>
             <p>{html.escape(description)}</p>
         </div>
-        <div class="mode-card-list">{features_html}</div>
+
+        <div class="mode-card-list">
+            {features_html}
+        </div>
+
         <div class="mode-card-cta">{html.escape(button_label)}</div>
     </article>
+    """
+
+
+def build_home_footer_html() -> str:
+    return """
+    <section class="home-footer">
+        <p>AI 기반 실시간 졸음 감지 및 이탈 분석 시스템</p>
+    </section>
     """
 
 
@@ -117,7 +130,7 @@ def build_stage_media_html(stage_media_url: str, stage_media_kind: str) -> str:
         """
 
     return (
-        "<div id=\"stage-bg-image\" "
+        '<div id="stage-bg-image" '
         f"style=\"background-image: url('{stage_media_url}');\"></div>"
     )
 
@@ -152,14 +165,14 @@ def build_stage_html(stage_media_url: str, stage_media_kind: str) -> str:
 def build_upload_intro_html() -> str:
     return """
     <section class="upload-intro">
-        <div class="upload-intro-badge">Upload Workflow</div>
-        <h2>녹화 영상 분석</h2>
-        <p>업로드, 시간 지정, 추론, 리포트 이동까지 한 번에 연결합니다.</p>
-        <ul>
-            <li>영상 파일 업로드 후 현재 선택 상태를 즉시 표시합니다.</li>
-            <li>수업 시작 시간을 입력하면 리포트 기준 시각으로 사용합니다.</li>
-            <li>분석이 끝나면 자동으로 리포트 화면으로 전환됩니다.</li>
-        </ul>
+        <div class="upload-intro-head">
+            <div class="upload-intro-icon">⤴</div>
+            <div class="upload-intro-copy">
+                <div class="upload-intro-badge">Upload Analysis</div>
+                <h2>녹화 영상 업로드</h2>
+                <p>수업 영상을 업로드하고 수업 시작 시간을 선택하면 자동으로 분석 리포트를 생성합니다.</p>
+            </div>
+        </div>
     </section>
     """
 
@@ -167,22 +180,82 @@ def build_upload_intro_html() -> str:
 def build_upload_feature_html() -> str:
     return """
     <section class="upload-feature-card">
-        <h3>분석 포인트</h3>
+        <div class="report-card-head">
+            <div>
+                <h3>분석 기능</h3>
+            </div>
+        </div>
+
         <div class="upload-feature-list">
             <div class="upload-feature-item">
-                <strong>얼굴 감지 및 추적</strong>
-                <span>기존 파이프라인을 재사용해 참여자별 상태를 집계합니다.</span>
+                <div class="upload-feature-icon tone-emerald">🎞</div>
+                <div class="upload-feature-copy">
+                    <strong>참여자 감지 및 추적</strong>
+                    <span>수업 영상 속 참여자 상태를 구간별로 확인합니다.</span>
+                </div>
             </div>
+
             <div class="upload-feature-item">
-                <strong>졸음 / 하품 / 이탈 집계</strong>
-                <span>학생별 프레임 통계를 묶어 리포트 카드로 변환합니다.</span>
+                <div class="upload-feature-icon tone-amber">😴</div>
+                <div class="upload-feature-copy">
+                    <strong>졸음 감지</strong>
+                    <span>눈, 얼굴 방향, 움직임 신호를 바탕으로 졸음 상태를 분석합니다.</span>
+                </div>
             </div>
+
             <div class="upload-feature-item">
-                <strong>자동 리포트 전환</strong>
-                <span>분석 완료 시 별도 클릭 없이 결과 화면으로 이동합니다.</span>
+                <div class="upload-feature-icon tone-red">🚶</div>
+                <div class="upload-feature-copy">
+                    <strong>이탈 감지</strong>
+                    <span>자리 비움 또는 화면 이탈 구간을 리포트에 기록합니다.</span>
+                </div>
+            </div>
+
+            <div class="upload-feature-item">
+                <div class="upload-feature-icon tone-violet">📊</div>
+                <div class="upload-feature-copy">
+                    <strong>리포트 자동 생성</strong>
+                    <span>분석 완료 후 이벤트 로그와 참여자별 통계를 자동으로 정리합니다.</span>
+                </div>
             </div>
         </div>
     </section>
+    """
+
+
+def build_upload_tip_html() -> str:
+    return """
+    <section class="upload-tip-card">
+        <div class="upload-tip-title">💡 분석 팁</div>
+        <ul class="upload-tip-list">
+            <li>참여자 얼굴이 비교적 선명한 영상을 사용하면 정확도가 높아집니다.</li>
+            <li>Zoom, Meet 등 썸네일이 잘 보이는 수업 영상을 권장합니다.</li>
+            <li>영상 길이가 길수록 추론 시간이 더 소요될 수 있습니다.</li>
+        </ul>
+    </section>
+    """
+
+
+def build_upload_time_intro_html() -> str:
+    return """
+    <section class="upload-time-card">
+        <div class="upload-time-head">
+            <div class="upload-time-icon">🕘</div>
+            <div>
+                <h3>수업 시작 시간 설정</h3>
+                <p>리포트의 이벤트 시간 표시를 맞추기 위해 실제 수업 시작 시간을 선택합니다.</p>
+            </div>
+        </div>
+    </section>
+    """
+
+
+def build_upload_time_preview_html(time_text: str) -> str:
+    return f"""
+    <div class="upload-time-preview">
+        <div class="upload-time-preview-label">선택된 시작 시간</div>
+        <div class="upload-time-preview-value">{html.escape(time_text)}</div>
+    </div>
     """
 
 
@@ -191,12 +264,13 @@ def build_upload_file_state_html(file_path: str | None) -> str:
         return """
         <div class="upload-file-state upload-file-empty">
             <div class="upload-file-state-title">업로드 대기 중</div>
-            <div class="upload-file-state-copy">MP4, MOV, AVI 등 수업 영상을 선택해주세요.</div>
+            <div class="upload-file-state-copy">MP4, MOV, AVI 등 수업 영상 파일을 선택해주세요.</div>
         </div>
         """
 
     path = Path(file_path)
     size_mb = path.stat().st_size / (1024 * 1024) if path.exists() else 0
+
     return f"""
     <div class="upload-file-state">
         <div class="upload-file-state-title">{html.escape(path.name)}</div>
@@ -216,26 +290,47 @@ def build_report_html(report_data: dict[str, Any] | None) -> str:
         </section>
         """
 
+    summary_meta_map = {
+        "총 참여자": "수업 전체 기준 집계",
+        "평균 집중도": "참여자 평균 집중 상태",
+        "졸음 감지 학생": "졸음 이벤트 발생 기준",
+        "졸음 감지": "졸음 이벤트 발생 기준",
+        "이탈 감지 학생": "이탈 이벤트 발생 기준",
+        "이탈 감지": "이탈 이벤트 발생 기준",
+    }
+
     summary_cards = "".join(
         f"""
-        <article class="report-summary-card tone-{html.escape(card.get('tone', 'neutral'))}">
+        <article class="report-summary-card report-animate tone-{html.escape(card.get('tone', 'neutral'))} figma-card">
             <div class="report-summary-label">{html.escape(card.get('label', ''))}</div>
             <div class="report-summary-value">{html.escape(str(card.get('value', '-')))}</div>
+            <div class="report-summary-meta">{html.escape(summary_meta_map.get(card.get('label', ''), '분석 결과 요약 지표'))}</div>
         </article>
         """
         for card in report_data.get("summary_cards", [])
     )
 
     events = report_data.get("events", [])
+    event_config = {
+        "positive": ("정상", "집중 상태가 유지되었습니다", "◉"),
+        "warning": ("졸음", "졸음이 감지되었습니다", "▲"),
+        "danger": ("이탈", "자리를 이탈했습니다", "●"),
+        "neutral": ("이벤트", "상태가 기록되었습니다", "◆"),
+    }
+
     events_html = (
         "".join(
             f"""
-            <div class="report-event tone-{html.escape(event.get('tone', 'neutral'))}">
-                <div class="report-event-head">
-                    <strong>{html.escape(event.get('title', '이벤트'))}</strong>
-                    <span>{html.escape(event.get('time', ''))}</span>
+            <div class="report-event report-animate tone-{html.escape(event.get('tone', 'neutral'))}">
+                <div class="report-event-icon">{event_config.get(event.get('tone', 'neutral'), event_config['neutral'])[2]}</div>
+                <div class="report-event-copy">
+                    <div class="report-event-head">
+                        <strong class="report-event-label">{html.escape(event_config.get(event.get('tone', 'neutral'), event_config['neutral'])[0])}</strong>
+                        <span class="report-event-time">{html.escape(event.get('time', ''))}</span>
+                    </div>
+                    <p>{html.escape(event_config.get(event.get('tone', 'neutral'), event_config['neutral'])[1])}</p>
+                    <div class="report-event-participant">{html.escape(event.get('detail', ''))}</div>
                 </div>
-                <p>{html.escape(event.get('detail', ''))}</p>
             </div>
             """
             for event in events
@@ -248,7 +343,7 @@ def build_report_html(report_data: dict[str, Any] | None) -> str:
     participants_html = (
         "".join(
             f"""
-            <div class="participant-card">
+            <div class="participant-card report-animate figma-card">
                 <div class="participant-head">
                     <strong>{html.escape(item.get('name', '참여자'))}</strong>
                     <span>집중도 {html.escape(str(item.get('focus', 0)))}%</span>
@@ -272,34 +367,102 @@ def build_report_html(report_data: dict[str, Any] | None) -> str:
     )
 
     highlights = report_data.get("highlights", [])
-    highlight_html = "".join(
-        f"<li>{html.escape(text)}</li>" for text in highlights
-    )
     chart_points = report_data.get("chart_points", [])
-    chart_columns = (
-        "".join(
-            f"""
-            <div class="report-chart-col">
-                <div class="report-chart-stack">
-                    <div class="chart-segment chart-normal" style="height:{max(point.get('normal', 0) * 18, 6)}px;"></div>
-                    <div class="chart-segment chart-drowsy" style="height:{max(point.get('drowsy', 0) * 18, 0)}px;"></div>
-                    <div class="chart-segment chart-absence" style="height:{max(point.get('absence', 0) * 18, 0)}px;"></div>
-                </div>
-                <div class="report-chart-label">{html.escape(point.get('time', ''))}</div>
-            </div>
-            """
-            for point in chart_points
+    insights = report_data.get("insights", [])
+
+    def _build_area_svg(points: list[dict[str, Any]]) -> str:
+        if not points:
+            return '<div class="report-placeholder">그래프를 표시할 히스토리가 아직 없습니다.</div>'
+
+        width = 760
+        height = 280
+        left = 42
+        right = 18
+        top = 18
+        bottom = 34
+        chart_w = width - left - right
+        chart_h = height - top - bottom
+
+        max_total = max(
+            max(
+                int(point.get("normal", 0))
+                + int(point.get("drowsy", 0))
+                + int(point.get("absence", 0)),
+                1,
+            )
+            for point in points
         )
-        if chart_points
-        else '<div class="report-placeholder">그래프를 표시할 실시간 히스토리가 아직 없습니다.</div>'
-    )
+
+        def x_at(idx: int) -> float:
+            if len(points) == 1:
+                return left + chart_w / 2
+            return left + (chart_w * idx / (len(points) - 1))
+
+        def y_at(value: float) -> float:
+            return top + chart_h - ((value / max_total) * chart_h)
+
+        xs = [x_at(idx) for idx in range(len(points))]
+        normal_vals = [float(point.get("normal", 0)) for point in points]
+        drowsy_vals = [
+            float(point.get("normal", 0)) + float(point.get("drowsy", 0))
+            for point in points
+        ]
+        absence_vals = [
+            float(point.get("normal", 0))
+            + float(point.get("drowsy", 0))
+            + float(point.get("absence", 0))
+            for point in points
+        ]
+
+        def polygon(top_values: list[float], bottom_values: list[float]) -> str:
+            top_points = " ".join(
+                f"{x:.1f},{y_at(v):.1f}" for x, v in zip(xs, top_values)
+            )
+            bottom_points = " ".join(
+                f"{x:.1f},{y_at(v):.1f}"
+                for x, v in zip(reversed(xs), reversed(bottom_values))
+            )
+            return f"{top_points} {bottom_points}"
+
+        def polyline(values: list[float]) -> str:
+            return " ".join(f"{x:.1f},{y_at(v):.1f}" for x, v in zip(xs, values))
+
+        grid = "".join(
+            f'<line x1="{left}" y1="{y_at(level):.1f}" x2="{width-right}" y2="{y_at(level):.1f}" class="chart-grid-line" />'
+            for level in range(0, max_total + 1)
+        )
+        labels = "".join(
+            f'<text x="{x:.1f}" y="{height-10}" text-anchor="middle" class="chart-axis-label">{html.escape(str(point.get("time", "")))}</text>'
+            for x, point in zip(xs, points)
+        )
+        y_labels = "".join(
+            f'<text x="{left-10}" y="{y_at(level)+4:.1f}" text-anchor="end" class="chart-axis-label">{level}</text>'
+            for level in range(0, max_total + 1)
+        )
+
+        return f"""
+        <div class="report-area-chart">
+            <svg viewBox="0 0 {width} {height}" class="report-area-svg" preserveAspectRatio="none">
+                {grid}
+                <polygon points="{polygon(normal_vals, [0.0] * len(points))}" class="area-normal-fill" />
+                <polygon points="{polygon(drowsy_vals, normal_vals)}" class="area-drowsy-fill" />
+                <polygon points="{polygon(absence_vals, drowsy_vals)}" class="area-absence-fill" />
+                <polyline points="{polyline(normal_vals)}" class="area-normal-line" />
+                <polyline points="{polyline(drowsy_vals)}" class="area-drowsy-line" />
+                <polyline points="{polyline(absence_vals)}" class="area-absence-line" />
+                {labels}
+                {y_labels}
+            </svg>
+        </div>
+        """
+
     chart_html = (
         f"""
-        <section class="report-card report-chart-card">
+        <section class="report-card report-chart-card report-animate figma-card">
             <div class="report-card-head">
                 <div>
-                    <h3>{html.escape(report_data.get('chart_title', '시간대별 상태 분석'))}</h3>
-                    <span>{html.escape(report_data.get('chart_subtitle', ''))}</span>
+                    <h3>↗ {html.escape(report_data.get('chart_title', '시간대별 상태 분석'))}</h3>
+                    <span>{html.escape(report_data.get('chart_subtitle', '시간 흐름에 따른 상태 변화'))}</span>
                 </div>
                 <div class="report-chart-legend">
                     <span><i class="chart-dot chart-normal"></i>정상</span>
@@ -307,52 +470,116 @@ def build_report_html(report_data: dict[str, Any] | None) -> str:
                     <span><i class="chart-dot chart-absence"></i>이탈</span>
                 </div>
             </div>
-            <div class="report-chart-wrap">{chart_columns}</div>
+            <div class="report-chart-wrap">
+                {_build_area_svg(chart_points)}
+            </div>
         </section>
         """
         if chart_points
         else ""
     )
 
-    return f"""
-    <section class="report-shell">
-        <div class="report-hero">
-            <div>
-                <div class="report-eyebrow">{html.escape(report_data.get('badge', 'Report'))}</div>
-                <h2>{html.escape(report_data.get('title', '분석 리포트'))}</h2>
-                <p>{html.escape(report_data.get('subtitle', ''))}</p>
+    insights_html = (
+        "".join(
+            f"""
+            <div class="report-insight report-animate tone-{html.escape(item.get('tone', 'info'))}">
+                <strong>{html.escape(item.get('title', '인사이트'))}</strong>
+                <p>{html.escape(item.get('detail', ''))}</p>
             </div>
-            <div class="report-source">{html.escape(report_data.get('source_label', ''))}</div>
+            """
+            for item in insights
+        )
+        if insights
+        else ""
+    )
+
+    is_upload_report = str(report_data.get("badge", "")).lower().startswith("upload")
+    back_target = "report-upload-btn" if is_upload_report else "report-live-btn"
+    action_buttons = (
+        '<button class="report-download-btn">↓ PDF</button><button class="report-download-btn">↓ Excel</button>'
+        if is_upload_report
+        else '<button class="report-download-btn">↓ 리포트 다운로드</button>'
+    )
+
+    title = report_data.get("title", "실시간 분석 리포트")
+    subtitle = report_data.get("subtitle", "분석 결과 요약")
+
+    fallback_primary = (
+        highlights[0]
+        if highlights
+        else "전체 수업 흐름과 주요 상태 변화를 종합해 확인할 수 있습니다."
+    )
+    fallback_secondary = (
+        highlights[-1] if highlights else "이벤트가 발생한 시간대를 다시 확인해 주세요."
+    )
+
+    return f"""
+    <section class="report-shell report-shell-realtime">
+        <div class="report-topbar">
+            <div class="report-topbar-main">
+                <button class="report-topbar-back" onclick="clickHiddenButton('{back_target}')">←</button>
+                <div>
+                    <h2>{html.escape(title)}</h2>
+                    <p>{html.escape(subtitle)}</p>
+                </div>
+            </div>
+            <div class="report-topbar-actions">
+                {action_buttons}
+            </div>
         </div>
 
-        <div class="report-summary-grid">{summary_cards}</div>
+        <div class="report-summary-grid">
+            {summary_cards}
+        </div>
 
         {chart_html}
 
         <div class="report-grid">
-            <section class="report-card">
+            <section class="report-card report-animate figma-card">
                 <div class="report-card-head">
-                    <h3>주요 상태 / 이벤트</h3>
-                    <span>{html.escape(str(len(events)))} items</span>
+                    <div>
+                        <h3>⊙ 이벤트 로그</h3>
+                        <span>졸음 및 이탈 발생 시점</span>
+                    </div>
                 </div>
-                <div class="report-event-list">{events_html}</div>
+                <div class="report-event-list">
+                    {events_html}
+                </div>
             </section>
 
-            <section class="report-card">
+            <section class="report-card report-animate figma-card">
                 <div class="report-card-head">
-                    <h3>분석 요약</h3>
-                    <span>Highlights</span>
+                    <div>
+                        <h3>참여자별 통계</h3>
+                        <span>개인별 집중도 및 상태 분석</span>
+                    </div>
                 </div>
-                <ul class="report-highlight-list">{highlight_html or '<li>요약 데이터가 없습니다.</li>'}</ul>
+                <div class="participant-grid">
+                    {participants_html}
+                </div>
             </section>
         </div>
 
-        <section class="report-card">
+        <section class="report-card report-animate figma-card">
             <div class="report-card-head">
-                <h3>참여자별 상태 분포</h3>
-                <span>{html.escape(str(len(participants)))} participants</span>
+                <div>
+                    <h3>분석 결과 및 제안</h3>
+                    <span>전체 수업 흐름 요약</span>
+                </div>
             </div>
-            <div class="participant-grid">{participants_html}</div>
+
+            <div class="report-insight-grid">
+                {insights_html or f'''
+                <div class="report-insight report-animate tone-info">
+                    <strong>분석 결과 요약</strong>
+                    <p>{html.escape(fallback_primary)}</p>
+                </div>
+                '''}
+                <div class="report-insight report-animate tone-warning">
+                    <strong>추가 확인 권장</strong>
+                    <p>{html.escape(fallback_secondary)}</p>
+                </div>
+            </div>
         </section>
     </section>
     """

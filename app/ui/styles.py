@@ -25,6 +25,7 @@ def build_css() -> str:
         --amber-soft: rgba(245, 158, 11, 0.14);
         --red: #ef4444;
         --red-soft: rgba(239, 68, 68, 0.14);
+        --radius-xl: 28px;
         --radius-lg: 24px;
         --radius-md: 18px;
         --radius-sm: 14px;
@@ -49,11 +50,17 @@ def build_css() -> str:
     .gradio-container,
     .gradio-container .main,
     .gradio-container .wrap,
-    .gradio-container .contain {{
+    .gradio-container .contain,
+    #demo-root,
+    #demo-root > .gr-block,
+    .demo-root,
+    .figma-app-root {{
         background: transparent !important;
         margin: 0 !important;
         padding: 0 !important;
         max-width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
     }}
 
     .gradio-container {{
@@ -73,6 +80,45 @@ def build_css() -> str:
         display: flex;
         flex-direction: column;
         gap: 24px;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    .view-shell > .gr-block,
+    .view-shell .gr-group,
+    .view-shell .gr-box,
+    .view-shell .gr-panel,
+    .view-shell .block,
+    .view-shell .gradio-html {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    .page-shell {{
+        background: transparent;
+        border: none;
+        box-shadow: none;
+    }}
+
+    .shell-header-wrap,
+    .home-hero-wrap,
+    .home-footer-wrap,
+    .live-stage-html,
+    .live-panel-html,
+    .upload-intro-wrap,
+    .upload-file-state-wrap,
+    .upload-feature-wrap,
+    .upload-time-intro-wrap,
+    .upload-time-preview-wrap,
+    .upload-tip-wrap,
+    .report-html-shell {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }}
 
     .view-card {{
@@ -88,7 +134,14 @@ def build_css() -> str:
         align-items: flex-start;
         justify-content: space-between;
         gap: 16px;
-        padding: 26px 28px 0;
+        position: sticky;
+        top: 16px;
+        z-index: 5;
+        padding: 16px 20px;
+        border-radius: 20px;
+        border: 1px solid rgba(30, 41, 59, 0.78);
+        background: rgba(21, 27, 46, 0.86);
+        backdrop-filter: blur(12px);
     }}
 
     .shell-header-main {{
@@ -118,10 +171,10 @@ def build_css() -> str:
     .home-hero h1,
     .report-hero h2 {{
         margin: 0;
-        font-size: 40px;
-        line-height: 1.05;
+        font-size: 22px;
+        line-height: 1.15;
         font-weight: 700;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.02em;
         color: var(--text);
     }}
 
@@ -132,7 +185,7 @@ def build_css() -> str:
     .upload-intro li {{
         margin: 0;
         color: var(--text-muted);
-        font-size: 15px;
+        font-size: 13px;
         line-height: 1.6;
     }}
 
@@ -193,25 +246,54 @@ def build_css() -> str:
     .home-shell {{
         position: relative;
         min-height: calc(100vh - 68px);
-        background: transparent;
+        background:
+            radial-gradient(circle at 50% 0%, rgba(17, 24, 39, 0.52), transparent 48%),
+            linear-gradient(180deg, #0a0e1a 0%, #0a0e1a 100%);
         border: none;
         box-shadow: none;
         overflow: visible;
+        border-radius: var(--radius-xl);
+        isolation: isolate;
+    }}
+
+    .home-shell,
+    .home-shell > .gr-block,
+    .home-shell .gr-group,
+    .home-shell .gr-box,
+    .home-shell .gr-panel,
+    .home-shell .block,
+    .home-shell-inner,
+    .home-shell-inner > .gr-block,
+    .home-shell-inner .gr-group,
+    .home-shell-inner .gr-box,
+    .home-shell-inner .gr-panel,
+    .home-shell-inner .block {{
+        background: #0a0e1a !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    .home-shell-inner {{
+        display: flex;
+        flex-direction: column;
+        gap: 0;
     }}
 
     .home-hero {{
         position: relative;
-        padding: 36px 28px 0;
+        padding: 36px 24px 0;
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
-        gap: 16px;
+        gap: 0;
         overflow: hidden;
     }}
 
     .home-hero h1 {{
-        max-width: 920px;
+        max-width: 960px;
+        margin-top: 0;
+        margin-bottom: 16px;
         font-size: 48px;
         line-height: 1.08;
     }}
@@ -220,7 +302,7 @@ def build_css() -> str:
         max-width: 760px;
         color: #94a3b8;
         font-size: 20px;
-        line-height: 1.55;
+        line-height: 1.5;
     }}
 
     .home-bg {{
@@ -232,19 +314,26 @@ def build_css() -> str:
     }}
 
     .home-bg-blue {{
-        width: 360px;
-        height: 240px;
-        top: -30px;
-        left: 16%;
-        background: rgba(37, 99, 235, 0.18);
+        width: 620px;
+        height: 360px;
+        top: -140px;
+        left: calc(50% - 310px);
+        background: rgba(17, 24, 39, 0.44);
     }}
 
     .home-bg-violet {{
-        width: 320px;
-        height: 220px;
-        top: 20px;
-        right: 18%;
-        background: rgba(124, 58, 237, 0.16);
+        display: none;
+    }}
+
+    .hero-badge {{
+        margin-bottom: 24px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(59, 130, 246, 0.20);
+        background: rgba(59, 130, 246, 0.10);
+        color: #93c5fd;
+        font-size: 14px;
+        font-weight: 500;
     }}
 
     .hero-badge-icon {{
@@ -257,46 +346,84 @@ def build_css() -> str:
         max-width: 1024px;
         margin: 0 auto;
         gap: 24px;
-        padding: 22px 28px 28px;
+        padding: 52px 24px 0 !important;
+    }}
+
+    .home-card-grid > *,
+    .home-card-grid > * > *,
+    .home-card-grid .gradio-html,
+    .home-card-grid .gr-box,
+    .home-card-grid .gr-block,
+    .home-card-grid .gr-panel,
+    .home-card-grid .block,
+    .home-card-col,
+    .home-card-col > .gr-block,
+    .home-card-html,
+    .home-card-html > .gr-block {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: 100%;
+    }}
+
+    .home-card-grid > * {{
+        display: flex !important;
+        align-self: stretch !important;
+    }}
+
+    .home-card-grid > * > * {{
+        width: 100%;
+        display: flex;
+    }}
+
+    .home-card-col {{
+        display: flex !important;
+        align-self: stretch !important;
+    }}
+
+    .home-card-html {{
+        width: 100%;
+        display: flex;
     }}
 
     .mode-card {{
         height: 100%;
-        min-height: 540px;
-        padding: 30px;
-        border-radius: 24px;
-        border: 1px solid rgba(71, 85, 105, 0.55);
-        background:
-            linear-gradient(180deg, rgba(31, 41, 55, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
-        box-shadow: 0 16px 34px rgba(2, 6, 23, 0.24);
+        min-height: 520px;
+        padding: 28px;
+        border-radius: 16px;
+        border: 1px solid rgba(30, 41, 59, 0.95);
+        background: #151b2e;
+        box-shadow: none;
         cursor: pointer;
         transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
     }}
 
     .mode-card:hover {{
-        transform: translateY(-6px);
+        transform: translateY(-2px);
     }}
 
     .mode-card-blue:hover {{
-        border-color: rgba(59, 130, 246, 0.46);
+        border-color: rgba(51, 65, 85, 0.98);
         box-shadow: 0 22px 44px rgba(37, 99, 235, 0.14);
     }}
 
     .mode-card-violet:hover {{
-        border-color: rgba(168, 85, 247, 0.46);
+        border-color: rgba(51, 65, 85, 0.98);
         box-shadow: 0 22px 44px rgba(124, 58, 237, 0.14);
     }}
 
     .mode-card-icon {{
-        width: 56px;
-        height: 56px;
+        width: 58px;
+        height: 58px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 14px;
-        margin-bottom: 18px;
-        background: rgba(255, 255, 255, 0.05);
-        font-size: 26px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        background: rgba(15, 23, 42, 0.28);
+        font-size: 24px;
     }}
 
     .mode-card-blue .mode-card-icon {{
@@ -315,7 +442,7 @@ def build_css() -> str:
         display: flex;
         flex-direction: column;
         gap: 8px;
-        margin-bottom: 18px;
+        margin-bottom: 24px;
     }}
 
     .mode-card h2,
@@ -327,10 +454,18 @@ def build_css() -> str:
         letter-spacing: -0.02em;
     }}
 
+    .mode-card-subtitle {{
+        color: #94a3b8;
+        font-size: 16px;
+        font-weight: 400;
+        letter-spacing: 0;
+        text-transform: none;
+    }}
+
     .mode-card p {{
         margin: 0;
         color: #cbd5e1;
-        line-height: 1.7;
+        line-height: 1.6;
         font-size: 16px;
     }}
 
@@ -341,7 +476,7 @@ def build_css() -> str:
         padding-left: 0;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
     }}
 
     .mode-feature {{
@@ -356,7 +491,7 @@ def build_css() -> str:
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 10px;
+        border-radius: 8px;
         flex-shrink: 0;
         margin-top: 2px;
         font-size: 14px;
@@ -375,19 +510,19 @@ def build_css() -> str:
     .mode-feature-copy {{
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 2px;
     }}
 
     .mode-feature-title {{
         color: #e2e8f0;
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 1.45;
     }}
 
     .mode-feature-desc {{
         color: #64748b;
         font-size: 12px;
-        line-height: 1.55;
+        line-height: 1.45;
     }}
 
     .mode-feature-title,
@@ -397,27 +532,92 @@ def build_css() -> str:
     }}
 
     .mode-card-cta {{
-        margin-top: 26px;
+        margin-top: 24px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         width: 100%;
         min-height: 48px;
-        border-radius: 14px;
-        font-weight: 700;
+        border-radius: 10px;
+        font-weight: 600;
         background: rgba(255, 255, 255, 0.06);
         color: white;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }}
 
     .mode-card-blue .mode-card-cta {{
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        box-shadow: 0 18px 30px rgba(37, 99, 235, 0.18);
+        background: #2563eb;
+        box-shadow: 0 12px 28px rgba(37, 99, 235, 0.20);
     }}
 
     .mode-card-violet .mode-card-cta {{
-        background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
-        box-shadow: 0 18px 30px rgba(147, 51, 234, 0.18);
+        background: #9333ea;
+        box-shadow: 0 12px 28px rgba(147, 51, 234, 0.20);
+    }}
+
+    .home-footer {{
+        padding: 64px 24px 20px;
+        text-align: center;
+    }}
+
+    .home-footer p {{
+        margin: 0;
+        color: #475569;
+        font-size: 14px;
+    }}
+
+    .live-page-shell,
+    .upload-page-shell,
+    .report-view-shell {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    .live-page-shell > .gr-block,
+    .live-page-shell .gr-group,
+    .live-page-shell .gr-box,
+    .live-page-shell .gr-panel,
+    .live-page-shell .block,
+    .live-page-inner,
+    .live-page-inner > .gr-block,
+    .live-page-inner .gr-group,
+    .live-page-inner .gr-box,
+    .live-page-inner .gr-panel,
+    .live-page-inner .block,
+    .upload-page-shell > .gr-block,
+    .upload-page-shell .gr-group,
+    .upload-page-shell .gr-box,
+    .upload-page-shell .gr-panel,
+    .upload-page-shell .block,
+    .upload-page-inner,
+    .upload-page-inner > .gr-block,
+    .upload-page-inner .gr-group,
+    .upload-page-inner .gr-box,
+    .upload-page-inner .gr-panel,
+    .upload-page-inner .block,
+    .report-view-shell > .gr-block,
+    .report-view-shell .gr-group,
+    .report-view-shell .gr-box,
+    .report-view-shell .gr-panel,
+    .report-view-shell .block,
+    .report-page-inner,
+    .report-page-inner > .gr-block,
+    .report-page-inner .gr-group,
+    .report-page-inner .gr-box,
+    .report-page-inner .gr-panel,
+    .report-page-inner .block {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    .live-page-inner,
+    .upload-page-inner,
+    .report-page-inner {{
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
     }}
 
     .live-layout,
@@ -442,6 +642,34 @@ def build_css() -> str:
     .report-actions {{
         display: flex !important;
         flex-wrap: wrap;
+    }}
+
+    .live-stage-column,
+    .live-stage-column > .gr-block,
+    .live-panel-column,
+    .live-panel-column > .gr-block,
+    .upload-main-column,
+    .upload-main-column > .gr-block,
+    .upload-side-column,
+    .upload-side-column > .gr-block,
+    .upload-main-stack,
+    .upload-main-stack > .gr-block,
+    .upload-side-stack,
+    .upload-side-stack > .gr-block,
+    .report-action-btn,
+    .report-action-btn > .gr-block,
+    .report-html-shell,
+    .report-html-shell > .gr-block {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    .upload-main-stack,
+    .upload-side-stack {{
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
     }}
 
     #stage-shell,
@@ -709,6 +937,25 @@ def build_css() -> str:
         gap: 14px;
     }}
 
+    .upload-intro-head {{
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+    }}
+
+    .upload-intro-icon {{
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(124, 58, 237, 0.10);
+        border: 1px solid rgba(167, 139, 250, 0.22);
+        color: #c084fc;
+        font-size: 18px;
+    }}
+
     .upload-feature-card h3,
     .report-card-head h3 {{
         margin: 0;
@@ -725,12 +972,49 @@ def build_css() -> str:
 
     .upload-feature-item {{
         display: flex;
-        flex-direction: column;
-        gap: 4px;
+        align-items: flex-start;
+        gap: 12px;
         padding: 14px;
         border-radius: 16px;
         background: rgba(15, 23, 42, 0.64);
         border: 1px solid var(--line);
+    }}
+
+    .upload-feature-icon {{
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        flex-shrink: 0;
+        font-size: 16px;
+    }}
+
+    .upload-feature-icon.tone-emerald {{
+        background: rgba(16, 185, 129, 0.12);
+        border: 1px solid rgba(16, 185, 129, 0.22);
+    }}
+
+    .upload-feature-icon.tone-amber {{
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.22);
+    }}
+
+    .upload-feature-icon.tone-violet {{
+        background: rgba(124, 58, 237, 0.12);
+        border: 1px solid rgba(124, 58, 237, 0.22);
+    }}
+
+    .upload-feature-icon.tone-red {{
+        background: rgba(239, 68, 68, 0.10);
+        border: 1px solid rgba(248, 113, 113, 0.22);
+    }}
+
+    .upload-feature-copy {{
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }}
 
     .upload-feature-item strong,
@@ -780,6 +1064,15 @@ def build_css() -> str:
         line-height: 1.6 !important;
     }}
 
+    .primary-action,
+    .secondary-action,
+    .ghost-action {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }}
+
     .primary-action button,
     .secondary-action button,
     .ghost-action button {{
@@ -826,8 +1119,18 @@ def build_css() -> str:
 
     .upload-file {{
         padding: 8px;
-        background: rgba(15, 23, 42, 0.64);
-        border: 1px dashed rgba(167, 139, 250, 0.4);
+        background: rgba(15, 23, 42, 0.64) !important;
+        border: 1px dashed rgba(167, 139, 250, 0.4) !important;
+    }}
+
+    .upload-file > .gr-block,
+    .upload-file .gr-group,
+    .upload-file .gr-box,
+    .upload-file .gr-panel,
+    .upload-file .block {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }}
 
     .upload-file label {{
@@ -848,24 +1151,223 @@ def build_css() -> str:
         border-radius: 14px !important;
     }}
 
+    .upload-time-card {{
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(124, 58, 237, 0.20);
+        background: linear-gradient(180deg, rgba(124, 58, 237, 0.08) 0%, rgba(37, 99, 235, 0.06) 100%);
+    }}
+
+    .upload-time-head {{
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }}
+
+    .upload-time-icon {{
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: rgba(124, 58, 237, 0.16);
+        border: 1px solid rgba(167, 139, 250, 0.22);
+        font-size: 18px;
+    }}
+
+    .upload-time-head h3 {{
+        margin: 0;
+        color: var(--text);
+        font-size: 17px;
+        font-weight: 700;
+    }}
+
+    .upload-time-head p {{
+        margin: 4px 0 0;
+        color: var(--text-muted);
+        font-size: 13px;
+        line-height: 1.5;
+    }}
+
+    .upload-time-preview {{
+        margin-top: 14px;
+        margin-bottom: 10px;
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(167, 139, 250, 0.20);
+        background: rgba(15, 23, 42, 0.74);
+        text-align: center;
+    }}
+
+    .upload-time-preview-label {{
+        color: var(--text-muted);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }}
+
+    .upload-time-preview-value {{
+        margin-top: 6px;
+        color: var(--text);
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+    }}
+
+    .dial-slider {{
+        margin-top: 10px;
+        padding: 12px 14px 16px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(15, 23, 42, 0.68) !important;
+    }}
+
+    .dial-slider > .gr-block,
+    .dial-slider .gr-group,
+    .dial-slider .gr-box,
+    .dial-slider .gr-panel,
+    .dial-slider .block {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    .dial-slider label {{
+        color: var(--text-soft) !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }}
+
+    .dial-slider input[type="range"] {{
+        accent-color: #8b5cf6;
+    }}
+
+    .upload-tip-card {{
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(124, 58, 237, 0.20);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.10) 0%, rgba(37, 99, 235, 0.08) 100%);
+    }}
+
+    .upload-tip-title {{
+        color: var(--text-soft);
+        font-size: 14px;
+        font-weight: 600;
+    }}
+
+    .upload-tip-list {{
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: var(--text-muted);
+        font-size: 12px;
+        line-height: 1.7;
+    }}
+
+    .report-html-shell,
+    .report-html-shell > .gr-block,
+    .report-html-shell .gr-group,
+    .report-html-shell .gr-box,
+    .report-html-shell .gr-panel,
+    .report-html-shell .block {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+
     .report-shell {{
         display: flex;
         flex-direction: column;
         gap: 20px;
     }}
 
-    .report-hero {{
+    .report-shell-realtime {{
+        gap: 20px;
+    }}
+
+    .report-view-shell {{
+        background: transparent;
+    }}
+
+    .report-topbar {{
+        position: sticky;
+        top: 16px;
+        z-index: 4;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: 14px;
+        padding: 14px 18px;
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        border-radius: 18px;
+        background: rgba(21, 27, 46, 0.86);
+        backdrop-filter: blur(12px);
+    }}
+
+    .report-topbar-main {{
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }}
+
+    .report-topbar-actions {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }}
+
+    .report-topbar-back,
+    .report-download-btn {{
+        border: 1px solid rgba(71, 85, 105, 0.85);
+        background: rgba(15, 23, 42, 0.84);
+        color: #cbd5e1;
+        cursor: pointer;
+        transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }}
+
+    .report-topbar-back:hover,
+    .report-download-btn:hover {{
+        background: rgba(30, 41, 59, 0.96);
+        color: #f8fafc;
+        transform: translateY(-1px);
+    }}
+
+    .report-topbar-back {{
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 18px;
+        line-height: 1;
+    }}
+
+    .report-download-btn {{
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }}
+
+    .report-topbar h2 {{
+        margin: 0;
+        font-size: 20px;
+        color: #f8fafc;
+        letter-spacing: -0.02em;
+    }}
+
+    .report-topbar p {{
+        margin: 4px 0 0;
+        color: #64748b;
+        font-size: 12px;
     }}
 
     .report-summary-grid,
     .report-grid,
     .participant-grid {{
         display: grid;
-        gap: 16px;
+        gap: 14px;
     }}
 
     .report-summary-grid {{
@@ -875,13 +1377,18 @@ def build_css() -> str:
     .report-summary-card,
     .report-card,
     .participant-card {{
-        border-radius: 20px;
-        border: 1px solid var(--line);
-        background: rgba(15, 23, 42, 0.66);
+        border-radius: 16px;
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        background: rgba(21, 27, 46, 0.98);
+    }}
+
+    .figma-card {{
+        box-shadow: none;
     }}
 
     .report-summary-card {{
-        padding: 18px;
+        padding: 18px 18px 16px;
+        backdrop-filter: blur(12px);
     }}
 
     .report-summary-label,
@@ -889,15 +1396,22 @@ def build_css() -> str:
     .participant-head span,
     .report-event-head span {{
         color: var(--text-muted);
-        font-size: 12px;
+        font-size: 11px;
     }}
 
     .report-summary-value {{
-        margin-top: 10px;
+        margin-top: 6px;
         color: var(--text);
-        font-size: 32px;
+        font-size: 30px;
         font-weight: 700;
         letter-spacing: -0.03em;
+    }}
+
+    .report-summary-meta {{
+        margin-top: 8px;
+        color: var(--text-muted);
+        font-size: 12px;
+        line-height: 1.5;
     }}
 
     .tone-positive .report-summary-value,
@@ -920,7 +1434,8 @@ def build_css() -> str:
     }}
 
     .report-card {{
-        padding: 20px;
+        padding: 18px;
+        backdrop-filter: blur(12px);
     }}
 
     .report-chart-card {{
@@ -962,40 +1477,84 @@ def build_css() -> str:
     }}
 
     .report-chart-wrap {{
-        margin-top: 18px;
-        min-height: 260px;
-        padding: 18px 14px 12px;
-        border-radius: 18px;
-        border: 1px solid var(--line);
-        background:
-            linear-gradient(180deg, rgba(15, 23, 42, 0.78) 0%, rgba(8, 13, 24, 0.82) 100%);
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
-        gap: 12px;
-        align-items: end;
+        margin-top: 14px;
+        min-height: 320px;
+        padding: 12px 8px 4px;
+        border-radius: 14px;
+        border: 1px solid rgba(30, 41, 59, 0.8);
+        background: rgba(15, 23, 42, 0.54);
     }}
 
-    .report-chart-col {{
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        min-width: 0;
-    }}
-
-    .report-chart-stack {{
+    .report-area-chart {{
+        position: relative;
         width: 100%;
-        min-height: 190px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        gap: 4px;
+        height: 268px;
     }}
 
-    .chart-segment {{
+    .report-area-chart::after {{
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(59, 130, 246, 0.04), transparent 40%);
+        pointer-events: none;
+    }}
+
+    .report-area-svg {{
         width: 100%;
-        border-radius: 10px 10px 4px 4px;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+        height: 100%;
+        display: block;
+    }}
+
+    .chart-grid-line {{
+        stroke: rgba(148, 163, 184, 0.14);
+        stroke-width: 1;
+    }}
+
+    .chart-axis-label {{
+        fill: #64748b;
+        font-size: 11px;
+    }}
+
+    .area-normal-fill {{
+        fill: rgba(16, 185, 129, 0.20);
+        animation: areaReveal 0.85s ease-out both;
+        transform-origin: bottom;
+    }}
+
+    .area-drowsy-fill {{
+        fill: rgba(245, 158, 11, 0.22);
+        animation: areaReveal 0.95s ease-out both;
+        transform-origin: bottom;
+    }}
+
+    .area-absence-fill {{
+        fill: rgba(239, 68, 68, 0.20);
+        animation: areaReveal 1.05s ease-out both;
+        transform-origin: bottom;
+    }}
+
+    .area-normal-line,
+    .area-drowsy-line,
+    .area-absence-line {{
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2.5;
+        stroke-dasharray: 1200;
+        stroke-dashoffset: 1200;
+        animation: chartLineDraw 1.1s ease-out forwards;
+    }}
+
+    .area-normal-line {{
+        stroke: #10b981;
+    }}
+
+    .area-drowsy-line {{
+        stroke: #f59e0b;
+    }}
+
+    .area-absence-line {{
+        stroke: #ef4444;
     }}
 
     .report-chart-label {{
@@ -1018,15 +1577,59 @@ def build_css() -> str:
     .participant-grid {{
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        margin-top: 14px;
+        gap: 10px;
+        margin-top: 12px;
     }}
 
     .report-event {{
-        padding: 14px;
-        border-radius: 16px;
-        border: 1px solid var(--line);
-        background: rgba(8, 13, 24, 0.42);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(30, 41, 59, 0.75);
+        background: rgba(8, 13, 24, 0.28);
+    }}
+
+    .report-event-icon {{
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: rgba(15, 23, 42, 0.72);
+        font-size: 13px;
+    }}
+
+    .report-event-label {{
+        font-size: 12px;
+        font-weight: 600;
+    }}
+
+    .report-event-time {{
+        color: #94a3b8;
+        font-size: 10px;
+    }}
+
+    .report-event-copy {{
+        flex: 1;
+        min-width: 0;
+    }}
+
+    .report-event p {{
+        margin: 5px 0 0;
+        color: #94a3b8;
+        font-size: 12px;
+        line-height: 1.45;
+    }}
+
+    .report-event-participant {{
+        margin-top: 5px;
+        color: #475569;
+        font-size: 11px;
     }}
 
     .report-event.tone-positive {{
@@ -1044,13 +1647,92 @@ def build_css() -> str:
         border-color: rgba(239, 68, 68, 0.24);
     }}
 
+    .report-animate {{
+        opacity: 0;
+        transform: translateY(18px);
+        animation: reportCardIn 0.55s ease-out forwards;
+    }}
+
+    .report-summary-grid .report-animate:nth-child(1) {{ animation-delay: 0.04s; }}
+    .report-summary-grid .report-animate:nth-child(2) {{ animation-delay: 0.09s; }}
+    .report-summary-grid .report-animate:nth-child(3) {{ animation-delay: 0.14s; }}
+    .report-summary-grid .report-animate:nth-child(4) {{ animation-delay: 0.19s; }}
+    .report-grid .report-animate:nth-child(1) {{ animation-delay: 0.22s; }}
+    .report-grid .report-animate:nth-child(2) {{ animation-delay: 0.28s; }}
+    .participant-grid .report-animate:nth-child(1) {{ animation-delay: 0.30s; }}
+    .participant-grid .report-animate:nth-child(2) {{ animation-delay: 0.34s; }}
+    .participant-grid .report-animate:nth-child(3) {{ animation-delay: 0.38s; }}
+
+    .report-insight-grid {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }}
+
+    .report-insight {{
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(8, 13, 24, 0.38);
+    }}
+
+    .report-insight strong {{
+        color: var(--text);
+        font-size: 14px;
+    }}
+
+    .report-insight p {{
+        margin: 8px 0 0;
+        color: var(--text-soft);
+        font-size: 13px;
+        line-height: 1.6;
+    }}
+
+    .report-insight.tone-info {{
+        background: rgba(37, 99, 235, 0.08);
+        border-color: rgba(96, 165, 250, 0.22);
+    }}
+
+    .report-insight.tone-warning {{
+        background: rgba(245, 158, 11, 0.08);
+        border-color: rgba(245, 158, 11, 0.22);
+    }}
+
+    @keyframes chartLineDraw {{
+        to {{
+            stroke-dashoffset: 0;
+        }}
+    }}
+
+    @keyframes areaReveal {{
+        from {{
+            opacity: 0;
+            transform: translateY(18px) scaleY(0.92);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0) scaleY(1);
+        }}
+    }}
+
+    @keyframes reportCardIn {{
+        from {{
+            opacity: 0;
+            transform: translateY(18px);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+    }}
+
     .report-placeholder,
     .report-empty {{
         padding: 22px;
-        border-radius: 18px;
+        border-radius: 16px;
         text-align: center;
-        background: rgba(15, 23, 42, 0.64);
-        border: 1px solid var(--line);
+        background: rgba(21, 27, 46, 0.96);
+        border: 1px solid rgba(30, 41, 59, 0.8);
         color: var(--text-muted);
     }}
 
@@ -1060,13 +1742,13 @@ def build_css() -> str:
     }}
 
     .participant-card {{
-        padding: 16px;
+        padding: 14px;
     }}
 
     .participant-bar {{
-        margin-top: 12px;
+        margin-top: 10px;
         display: flex;
-        height: 8px;
+        height: 7px;
         border-radius: 999px;
         overflow: hidden;
         background: rgba(51, 65, 85, 0.8);
@@ -1085,10 +1767,44 @@ def build_css() -> str:
     }}
 
     .participant-meta {{
-        margin-top: 10px;
+        margin-top: 8px;
         display: flex;
-        gap: 12px;
+        gap: 10px;
         flex-wrap: wrap;
+        color: var(--text-muted);
+        font-size: 11px;
+    }}
+
+    .report-card-head h3 {{
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+    }}
+
+    .report-chart-card .report-card-head h3 {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }}
+
+    .report-insight-grid {{
+        gap: 12px;
+    }}
+
+    .report-insight {{
+        padding: 14px;
+        border-radius: 14px;
+    }}
+
+    .report-insight strong {{
+        font-size: 13px;
+    }}
+
+    .report-insight p {{
+        margin-top: 6px;
+        font-size: 12px;
+        line-height: 1.5;
     }}
 
     .bridge-hidden {{
@@ -1101,6 +1817,7 @@ def build_css() -> str:
         }}
 
         .report-grid,
+        .report-insight-grid,
         .live-layout,
         .upload-layout {{
             grid-template-columns: 1fr !important;
@@ -1124,13 +1841,14 @@ def build_css() -> str:
 
         .shell-header,
         .shell-header-main,
-        .report-hero {{
+        .report-topbar,
+        .report-topbar-main {{
             flex-direction: column;
         }}
 
         .shell-copy h1,
         .home-hero h1,
-        .report-hero h2 {{
+        .report-topbar h2 {{
             font-size: 30px;
         }}
 

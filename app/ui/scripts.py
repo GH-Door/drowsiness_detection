@@ -291,7 +291,7 @@ def build_head_script() -> str:
         }}
     }}
 
-    function stopOverlayCamera() {{
+    function stopOverlayCamera(deferTrackStop = false) {{
         const state = overlayState();
         const video = document.getElementById("student-cam");
         const placeholder = document.getElementById("cam-placeholder");
@@ -305,12 +305,19 @@ def build_head_script() -> str:
         state.inFlightSeq = 0;
 
         const stream = video.srcObject;
-        if (stream) {{
-            stream.getTracks().forEach(track => track.stop());
-        }}
-
         video.pause();
         video.srcObject = null;
+
+        if (stream) {{
+            const stopTracks = () => {{
+                stream.getTracks().forEach(track => track.stop());
+            }};
+            if (deferTrackStop) {{
+                window.setTimeout(stopTracks, 0);
+            }} else {{
+                stopTracks();
+            }}
+        }}
 
         if (placeholder) {{
             placeholder.innerText = "Start 버튼을 눌러 카메라를 켜세요.";
