@@ -15,7 +15,6 @@ from scripts.infer_video import run_inference
 
 Status = str
 
-
 ALERT_COOLDOWN_SEC = 30
 
 PANEL_STATE: dict[str, Any] = {
@@ -51,6 +50,7 @@ def _now_ts() -> datetime:
 
 def _status_meta(status: str) -> dict[str, str]:
     normalized = (status or "NORMAL").upper()
+
     if normalized == "DROWSY":
         return {
             "label": "졸음",
@@ -149,6 +149,7 @@ def _sync_panel_state(snapshot: RuntimeSnapshot) -> None:
                 elif status == "ABSENT":
                     _push_alert("ABSENT", f"{name} 학생이 자리를 이탈했습니다.")
                 PANEL_STATE["last_alert_time"][name] = now
+
         PANEL_STATE["prev_statuses"][sid] = status
 
     _append_timeline_sample(snapshot)
@@ -229,10 +230,12 @@ def _report_text() -> str:
     stats = PANEL_STATE["slot_stats"]
     elapsed = _elapsed_sec()
     lines = [f"Total Time: {_format_duration(elapsed)}"]
+
     for _, stat in sorted(stats.items()):
         total = stat["normal"] + stat["drowsy"] + stat["absent"] + stat["yawn"]
         pct = _safe_pct(stat["normal"], total)
         lines.append(f"{stat['name']}: {pct}% 정상")
+
     return "\n".join(lines)
 
 
@@ -250,9 +253,9 @@ def _slots_to_json(slots) -> str:
                 "ear": round(float(s.ear), 3),
                 "mar": round(float(s.mar), 3),
                 "box_pct": [round(v, 6) for v in s.box_pct],
-                "face_box_pct": [round(v, 6) for v in s.face_box_pct]
-                if s.face_box_pct
-                else [],
+                "face_box_pct": (
+                    [round(v, 6) for v in s.face_box_pct] if s.face_box_pct else []
+                ),
                 "noface": s.noface,
             }
             for s in slots
@@ -269,6 +272,7 @@ def _build_control_panel(is_running: bool) -> str:
     live_chip = (
         '<div class="panel-live-chip">실시간 분석 중</div>' if is_running else ""
     )
+
     return f"""
     <section class="panel-card">
         <div class="panel-card-head">
@@ -321,6 +325,7 @@ def _build_slot_list(slots: list) -> str:
     for slot in slots:
         if slot.is_teacher:
             continue
+
         meta = _status_meta(slot.status)
         rows.append(
             f"""
@@ -333,7 +338,12 @@ def _build_slot_list(slots: list) -> str:
             </div>
             """
         )
-    items_html = "".join(rows) if rows else '<div class="panel-empty">감지된 수강생이 없습니다.</div>'
+
+    items_html = (
+        "".join(rows)
+        if rows
+        else '<div class="panel-empty">감지된 수강생이 없습니다.</div>'
+    )
     return f"""
     <section class="panel-card">
         <div class="panel-card-head">
@@ -349,20 +359,32 @@ def _build_slot_list(slots: list) -> str:
 
 def _build_alert_card(alerts: list[dict[str, Any]]) -> str:
     items = []
+    label_map = {
+        "DROWSY": "졸음",
+        "ABSENT": "이탈",
+        "NORMAL": "정상",
+    }
+
     for alert in alerts[:10]:
         tone = _alert_tone(alert["type"])
+        label = label_map.get(alert["type"], alert["type"])
         items.append(
             f"""
             <div class="panel-alert tone-{tone}">
                 <div class="panel-alert-head">
-                    <strong>{alert['type']}</strong>
+                    <strong>{label}</strong>
                     <span>{_format_time(alert['timestamp'])}</span>
                 </div>
                 <p>{alert['message']}</p>
             </div>
             """
         )
-    items_html = "".join(items) if items else '<div class="panel-empty">실시간 알림이 없습니다.</div>'
+
+    items_html = (
+        "".join(items)
+        if items
+        else '<div class="panel-empty">실시간 알림이 없습니다.</div>'
+    )
     return f"""
     <section class="panel-card">
         <div class="panel-card-head">
@@ -385,6 +407,7 @@ def render_panel_html(
     slots: Optional[list] = None,
 ) -> str:
     del camera_state, alert, report
+
     if slots is None:
         slots = []
 
@@ -416,11 +439,17 @@ def build_empty_report_data() -> dict[str, Any]:
             "현재는 연결된 리포트 데이터가 없습니다.",
             "홈 화면에서 실시간 분석 또는 녹화 분석을 시작해주세요.",
         ],
+        "insights": [],
+        "chart_title": "시간대별 상태 분석",
+        "chart_subtitle": "분석 데이터가 쌓이면 상태 변화 그래프가 표시됩니다.",
+        "chart_points": [],
     }
 
 
 def build_live_report_data() -> dict[str, Any]:
     stats = PANEL_STATE["slot_stats"]
+    snapshot = RUNTIME.snapshot()
+
     participants = []
     total_focus = 0
     drowsy_students = 0
@@ -431,6 +460,7 @@ def build_live_report_data() -> dict[str, Any]:
         focus = _safe_pct(stat["normal"], total)
         drowsy = _safe_pct(stat["drowsy"], total)
         absent = _safe_pct(stat["absent"], total)
+
         participants.append(
             {
                 "name": stat["name"],
@@ -446,8 +476,48 @@ def build_live_report_data() -> dict[str, Any]:
         if stat["absent"] > 0:
             absent_students += 1
 
-    alerts = deepcopy(PANEL_STATE["alerts"])
+    if not participants and snapshot.slots:
+        fallback_slots = [slot for slot in snapshot.slots if not slot.is_teacher]
+        for slot in fallback_slots:
+            focus = 100 if slot.status == "NORMAL" else 0
+            drowsy = 100 if slot.status == "DROWSY" else 0
+            absent = 100 if slot.status == "ABSENT" else 0
+            participants.append(
+                {
+                    "name": slot.name,
+                    "focus": focus,
+                    "normal": focus,
+                    "drowsy": drowsy,
+                    "absence": absent,
+                }
+            )
+
+        total_focus = sum(item["focus"] for item in participants)
+        drowsy_students = sum(1 for item in participants if item["drowsy"] > 0)
+        absent_students = sum(1 for item in participants if item["absence"] > 0)
+
     timeline = deepcopy(PANEL_STATE["timeline"])
+    if not timeline and snapshot.slots:
+        fallback_students = [slot for slot in snapshot.slots if not slot.is_teacher]
+        timeline = [
+            {
+                "time": _format_duration(_elapsed_sec()),
+                "normal": sum(
+                    1 for slot in fallback_students if slot.status == "NORMAL"
+                ),
+                "drowsy": sum(
+                    1 for slot in fallback_students if slot.status == "DROWSY"
+                ),
+                "absence": sum(
+                    1 for slot in fallback_students if slot.status == "ABSENT"
+                ),
+            }
+        ]
+
+    if not participants:
+        return build_empty_report_data()
+
+    alerts = deepcopy(PANEL_STATE["alerts"])
     events = [
         {
             "title": "졸음 감지" if alert["type"] == "DROWSY" else "자리 이탈",
@@ -460,18 +530,18 @@ def build_live_report_data() -> dict[str, Any]:
 
     avg_focus = _safe_pct(total_focus, len(participants) * 100) if participants else 0
     elapsed = _format_duration(_elapsed_sec())
+    weakest = (
+        min(participants, key=lambda item: item["focus"]) if participants else None
+    )
+
     highlights = [
         f"실시간 분석이 {elapsed} 동안 누적되었습니다.",
         f"참여자 {len(participants)}명 기준 평균 집중도는 {avg_focus}%입니다.",
     ]
-    if participants:
-        weakest = min(participants, key=lambda item: item["focus"])
+    if weakest:
         highlights.append(
             f"가장 집중도가 낮았던 학생은 {weakest['name']}이며 집중도 {weakest['focus']}%로 집계되었습니다."
         )
-
-    if not participants:
-        return build_empty_report_data()
 
     return {
         "badge": "Live Report",
@@ -479,14 +549,42 @@ def build_live_report_data() -> dict[str, Any]:
         "subtitle": f"세션 누적 시간 {elapsed} 기준의 실시간 요약 결과입니다.",
         "source_label": "Realtime session summary",
         "summary_cards": [
-            {"label": "총 참여자", "value": f"{len(participants)}명", "tone": "neutral"},
+            {
+                "label": "총 참여자",
+                "value": f"{len(participants)}명",
+                "tone": "neutral",
+            },
             {"label": "평균 집중도", "value": f"{avg_focus}%", "tone": "positive"},
-            {"label": "졸음 감지 학생", "value": f"{drowsy_students}명", "tone": "warning"},
-            {"label": "이탈 감지 학생", "value": f"{absent_students}명", "tone": "danger"},
+            {
+                "label": "졸음 감지 학생",
+                "value": f"{drowsy_students}명",
+                "tone": "warning",
+            },
+            {
+                "label": "이탈 감지 학생",
+                "value": f"{absent_students}명",
+                "tone": "danger",
+            },
         ],
         "events": events,
         "participants": participants,
         "highlights": highlights,
+        "insights": [
+            {
+                "tone": "info",
+                "title": "분석 결과 요약",
+                "detail": f"전체적으로 평균 집중도 {avg_focus}%를 유지했습니다.",
+            },
+            {
+                "tone": "warning",
+                "title": "추가 확인 권장",
+                "detail": (
+                    f"{weakest['name']} 학생은 상대적으로 집중도 편차가 커서 이벤트 발생 구간을 함께 확인하는 것이 좋습니다."
+                    if weakest
+                    else "현재는 추가 확인할 학생 데이터가 없습니다."
+                ),
+            },
+        ],
         "chart_title": "시간대별 상태 분석",
         "chart_subtitle": "15초 단위로 집계한 정상 / 졸음 / 이탈 상태 변화입니다.",
         "chart_points": timeline,
@@ -511,6 +609,7 @@ def build_upload_report_data(
         drowsy = _safe_pct(row.get("frames_drowsy", 0), total_frames)
         absent = _safe_pct(row.get("frames_absent", 0), total_frames)
         participant_name = row.get("name") or f"학생 {row.get('slot_id', '-')}"
+
         participants.append(
             {
                 "name": participant_name,
@@ -521,6 +620,7 @@ def build_upload_report_data(
             }
         )
         total_focus += focus
+
         if row.get("frames_drowsy", 0):
             drowsy_students += 1
         if row.get("frames_absent", 0):
@@ -529,15 +629,15 @@ def build_upload_report_data(
     participants.sort(key=lambda item: item["focus"])
     avg_focus = _safe_pct(total_focus, len(participants) * 100) if participants else 0
     duration_text = (
-        f"{duration_sec // 60}분 {duration_sec % 60}초" if duration_sec else "길이 미확인"
+        f"{duration_sec // 60}분 {duration_sec % 60}초"
+        if duration_sec
+        else "길이 미확인"
     )
 
-    # Placeholder: 현재 배치 파이프라인 요약은 시점별 이벤트 로그를 직접 반환하지 않으므로
-    # 학생별 집계에서 의미 있는 요약 카드만 구성하고 상세 이벤트 섹션은 안내 문구로 채웁니다.
     events = [
         {
             "title": "집계 기반 리포트",
-            "detail": "현재 업로드 분석은 학생별 누적 프레임 통계 중심으로 요약되며, 시점별 이벤트 로그는 후속 연결 대상입니다.",
+            "detail": "현재 업로드 분석은 학생별 누적 프레임 통계 중심으로 요약되며, 시점별 상세 이벤트 로그는 후속 연결 대상입니다.",
             "time": class_start_time or "시간 미지정",
             "tone": "warning",
         }
@@ -546,10 +646,11 @@ def build_upload_report_data(
     highlights = [
         f"{video_name} 분석이 완료되었습니다.",
         f"수업 시작 시각은 {class_start_time or '미지정'}로 반영되었습니다.",
-        f"총 영상 길이는 {duration_text}, 평균 집중도는 {avg_focus}%입니다.",
+        f"총 영상 길이는 {duration_text}이며 평균 집중도는 {avg_focus}%입니다.",
     ]
-    if participants:
-        weakest = participants[0]
+
+    weakest = participants[0] if participants else None
+    if weakest:
         highlights.append(
             f"추가 확인이 필요한 학생은 {weakest['name']}이며 집중도 {weakest['focus']}%입니다."
         )
@@ -569,6 +670,10 @@ def build_upload_report_data(
             "events": events,
             "participants": [],
             "highlights": highlights,
+            "insights": [],
+            "chart_title": "시간대별 상태 분석",
+            "chart_subtitle": "업로드 분석의 시계열 데이터가 아직 연결되지 않았습니다.",
+            "chart_points": [],
         }
 
     return {
@@ -577,14 +682,45 @@ def build_upload_report_data(
         "subtitle": f"{class_start_time or '시간 미지정'} 수업 기준 요약 결과입니다.",
         "source_label": video_name,
         "summary_cards": [
-            {"label": "총 참여자", "value": f"{len(participants)}명", "tone": "neutral"},
+            {
+                "label": "총 참여자",
+                "value": f"{len(participants)}명",
+                "tone": "neutral",
+            },
             {"label": "평균 집중도", "value": f"{avg_focus}%", "tone": "positive"},
-            {"label": "졸음 감지 학생", "value": f"{drowsy_students}명", "tone": "warning"},
-            {"label": "이탈 감지 학생", "value": f"{absent_students}명", "tone": "danger"},
+            {
+                "label": "졸음 감지 학생",
+                "value": f"{drowsy_students}명",
+                "tone": "warning",
+            },
+            {
+                "label": "이탈 감지 학생",
+                "value": f"{absent_students}명",
+                "tone": "danger",
+            },
         ],
         "events": events,
         "participants": participants,
         "highlights": highlights,
+        "insights": [
+            {
+                "tone": "info",
+                "title": "업로드 분석 요약",
+                "detail": f"총 {len(participants)}명의 참여자 데이터를 기준으로 평균 집중도 {avg_focus}%가 집계되었습니다.",
+            },
+            {
+                "tone": "warning",
+                "title": "추가 확인 권장",
+                "detail": (
+                    f"{weakest['name']} 학생은 상대적으로 집중도 편차가 커서 해당 구간 원본 영상을 다시 확인하는 것이 좋습니다."
+                    if weakest
+                    else "추가 확인이 필요한 학생 데이터가 없습니다."
+                ),
+            },
+        ],
+        "chart_title": "시간대별 상태 분석",
+        "chart_subtitle": "업로드 분석의 시계열 데이터는 현재 준비 중입니다.",
+        "chart_points": [],
     }
 
 
@@ -592,8 +728,18 @@ def render_report_html(report_data: dict[str, Any] | None) -> str:
     return build_report_html(report_data or build_empty_report_data())
 
 
+def prepare_live_report_data() -> dict[str, Any]:
+    _stop_panel_state()
+    RUNTIME.stop()
+    return build_live_report_data()
+
+
 def describe_uploaded_file(file_path: str | None) -> str:
     return build_upload_file_state_html(file_path)
+
+
+def compose_class_start_time(hour: float | int, minute: float | int) -> str:
+    return f"{int(hour):02d}:{int(minute):02d}"
 
 
 def analyze_uploaded_video(
@@ -636,8 +782,9 @@ def analyze_uploaded_video(
     )
 
     progress(1.0, desc="완료")
-    return report_data, (
-        f"`{video_path.name}` 분석이 완료되었습니다. 리포트 화면으로 이동합니다."
+    return (
+        report_data,
+        f"`{video_path.name}` 분석이 완료되었습니다. 리포트 화면으로 이동합니다.",
     )
 
 
@@ -666,6 +813,7 @@ def on_start():
     _reset_panel_state()
     snapshot = RUNTIME.start()
     _sync_panel_state(snapshot)
+
     panel_html = render_panel_html(
         camera_state="ON",
         status=snapshot.status,
@@ -689,6 +837,7 @@ def on_start():
 def on_stop(frame_ack: int):
     _stop_panel_state()
     snapshot = RUNTIME.stop()
+
     panel_html = render_panel_html(
         camera_state="OFF",
         status=snapshot.status,
