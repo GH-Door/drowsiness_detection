@@ -198,12 +198,16 @@ class LiveZoomEngine:
                 )
             )
 
-        # 대표 상태: DROWSY > YAWN > ABSENT > NORMAL
-        priority = {"DROWSY": 3, "YAWN": 2, "ABSENT": 1, "NORMAL": 0}
+        # 실시간 UI에서는 YAWN을 NORMAL로 취급
+        priority = {"DROWSY": 2, "ABSENT": 1, "NORMAL": 0}
         rep_status = "NORMAL"
         if slots:
             rep_status = max(
-                (s.status for s in slots if not s.is_teacher),
+                (
+                    "NORMAL" if s.status == "YAWN" else s.status
+                    for s in slots
+                    if not s.is_teacher
+                ),
                 key=lambda x: priority.get(x, 0),
                 default="NORMAL",
             )
@@ -211,7 +215,6 @@ class LiveZoomEngine:
         alert_map = {
             "NORMAL": "이상 없음",
             "DROWSY": "졸음 감지 알림",
-            "YAWN": "하품 감지",
             "ABSENT": "자리 이탈 알림",
         }
         alert = alert_map.get(rep_status, "상태를 확인할 수 없습니다")

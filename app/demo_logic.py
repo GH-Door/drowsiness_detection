@@ -50,6 +50,8 @@ def _now_ts() -> datetime:
 
 def _status_meta(status: str) -> dict[str, str]:
     normalized = (status or "NORMAL").upper()
+    if normalized == "YAWN":
+        normalized = "NORMAL"
 
     if normalized == "DROWSY":
         return {
@@ -58,14 +60,6 @@ def _status_meta(status: str) -> dict[str, str]:
             "bg": "rgba(245, 158, 11, 0.12)",
             "desc": "졸음이 감지되었습니다",
             "icon": "졸음",
-        }
-    if normalized == "YAWN":
-        return {
-            "label": "하품",
-            "color": "#fb923c",
-            "bg": "rgba(251, 146, 60, 0.12)",
-            "desc": "하품이 감지되었습니다",
-            "icon": "하품",
         }
     if normalized == "ABSENT":
         return {
@@ -117,6 +111,7 @@ def _sync_panel_state(snapshot: RuntimeSnapshot) -> None:
         sid = slot.slot_id
         name = slot.name
         status = slot.status
+        panel_status = "NORMAL" if status == "YAWN" else status
 
         if sid not in PANEL_STATE["slot_stats"]:
             PANEL_STATE["slot_stats"][sid] = {
@@ -124,33 +119,30 @@ def _sync_panel_state(snapshot: RuntimeSnapshot) -> None:
                 "normal": 0,
                 "drowsy": 0,
                 "absent": 0,
-                "yawn": 0,
             }
         else:
             PANEL_STATE["slot_stats"][sid]["name"] = name
 
         stat = PANEL_STATE["slot_stats"][sid]
-        if status == "DROWSY":
+        if panel_status == "DROWSY":
             stat["drowsy"] += 1
-        elif status == "ABSENT":
+        elif panel_status == "ABSENT":
             stat["absent"] += 1
-        elif status == "YAWN":
-            stat["yawn"] += 1
         else:
             stat["normal"] += 1
 
         prev = PANEL_STATE["prev_statuses"].get(sid, "NORMAL")
-        if prev != status and status not in ("NORMAL", "YAWN"):
+        if prev != panel_status and panel_status != "NORMAL":
             now = time.time()
             last_t = PANEL_STATE["last_alert_time"].get(name, 0)
             if now - last_t >= ALERT_COOLDOWN_SEC:
-                if status == "DROWSY":
+                if panel_status == "DROWSY":
                     _push_alert("DROWSY", f"{name} 학생에게 졸음이 감지되었습니다.")
-                elif status == "ABSENT":
+                elif panel_status == "ABSENT":
                     _push_alert("ABSENT", f"{name} 학생이 자리를 이탈했습니다.")
                 PANEL_STATE["last_alert_time"][name] = now
 
-        PANEL_STATE["prev_statuses"][sid] = status
+        PANEL_STATE["prev_statuses"][sid] = panel_status
 
     _append_timeline_sample(snapshot)
 
@@ -232,7 +224,7 @@ def _report_text() -> str:
     lines = [f"Total Time: {_format_duration(elapsed)}"]
 
     for _, stat in sorted(stats.items()):
-        total = stat["normal"] + stat["drowsy"] + stat["absent"] + stat["yawn"]
+        total = stat["normal"] + stat["drowsy"] + stat["absent"]
         pct = _safe_pct(stat["normal"], total)
         lines.append(f"{stat['name']}: {pct}% 정상")
 
@@ -294,14 +286,11 @@ def _build_status_card(status: str, slots: list) -> str:
     meta = _status_meta(status)
     slot_count = len(slots)
     drowsy_count = sum(1 for s in slots if s.status == "DROWSY")
-    yawn_count = sum(1 for s in slots if s.status == "YAWN")
     absent_count = sum(1 for s in slots if s.status == "ABSENT")
 
     summary = f"감지된 학생 {slot_count}명"
     if drowsy_count:
         summary += f" · 졸음 {drowsy_count}명"
-    if yawn_count:
-        summary += f" · 하품 {yawn_count}명"
     if absent_count:
         summary += f" · 이탈 {absent_count}명"
 
@@ -456,7 +445,7 @@ def build_live_report_data() -> dict[str, Any]:
     absent_students = 0
 
     for _, stat in sorted(stats.items()):
-        total = stat["normal"] + stat["drowsy"] + stat["absent"] + stat["yawn"]
+        total = stat["normal"] + stat["drowsy"] + stat["absent"]
         focus = _safe_pct(stat["normal"], total)
         drowsy = _safe_pct(stat["drowsy"], total)
         absent = _safe_pct(stat["absent"], total)
@@ -479,7 +468,8 @@ def build_live_report_data() -> dict[str, Any]:
     if not participants and snapshot.slots:
         fallback_slots = [slot for slot in snapshot.slots if not slot.is_teacher]
         for slot in fallback_slots:
-            focus = 100 if slot.status == "NORMAL" else 0
+            normalized_status = "NORMAL" if slot.status == "YAWN" else slot.status
+            focus = 100 if normalized_status == "NORMAL" else 0
             drowsy = 100 if slot.status == "DROWSY" else 0
             absent = 100 if slot.status == "ABSENT" else 0
             participants.append(
@@ -503,7 +493,9 @@ def build_live_report_data() -> dict[str, Any]:
             {
                 "time": _format_duration(_elapsed_sec()),
                 "normal": sum(
-                    1 for slot in fallback_students if slot.status == "NORMAL"
+                    1
+                    for slot in fallback_students
+                    if slot.status in ("NORMAL", "YAWN")
                 ),
                 "drowsy": sum(
                     1 for slot in fallback_students if slot.status == "DROWSY"

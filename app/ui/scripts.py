@@ -161,14 +161,13 @@ def build_head_script() -> str:
     const BBOX_COLORS = {{
         NORMAL: "rgba(70,  220, 70,  0.90)",
         DROWSY: "rgba(255, 0,   0,   0.95)",
-        YAWN:   "rgba(255, 128, 0,   0.90)",
         ABSENT: "rgba(255, 165, 0,   0.95)",
         IGNORE: "rgba(160, 160, 160, 0.85)",
     }};
     const NOFACE_COLOR = "rgba(160, 160, 160, 0.85)";
 
     const STATUS_KO = {{
-        NORMAL: "정상", DROWSY: "졸음", YAWN: "하품", ABSENT: "이탈",
+        NORMAL: "정상", DROWSY: "졸음", ABSENT: "이탈",
     }};
 
     function drawBboxOverlay(slots) {{
@@ -197,7 +196,7 @@ def build_head_script() -> str:
             const h = (y2p - y1p) * rect.height;
             if (w < 4 || h < 4) continue;
 
-            // YAWN은 bbox에 표시하지 않음 (대시보드/CSV에는 유지) → NORMAL로 보여줌
+            // YAWN은 실시간 화면에서 NORMAL로 보여줌
             const uiStatus = (s.status === "YAWN") ? "NORMAL" : s.status;
             // infer_video.py 동일 로직: noface면 status 무시, NOT FOUND 표시
             const displayState = s.noface ? "NOT FOUND" : uiStatus;

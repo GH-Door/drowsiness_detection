@@ -11,12 +11,19 @@ from typing import Optional
 import cv2
 import numpy as np
 
+OCR_NAME_CORRECTIONS = {
+    "류데림": "류혜림",
+}
+
 
 def _normalize_name(text: Optional[str]) -> str:
     """한글 글자만 추출 (공백 제거)."""
     if text is None:
         return ""
-    return "".join(ch for ch in str(text).strip().replace(" ", "") if "가" <= ch <= "힣")
+    normalized = "".join(
+        ch for ch in str(text).strip().replace(" ", "") if "가" <= ch <= "힣"
+    )
+    return OCR_NAME_CORRECTIONS.get(normalized, normalized)
 
 
 def _crop_name_region(thumb_bgr: np.ndarray, band_ratio: float = 0.30) -> np.ndarray:
