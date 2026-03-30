@@ -6,6 +6,129 @@ from app.config import BG_H, BG_W, SLOT_H, SLOT_W, SLOT_X, SLOT_Y
 def build_live_css() -> str:
     return dedent(
         f"""
+        #live-view,
+        #live-view::before,
+        #live-view::after,
+        #live-view > .gr-block,
+        #live-view > .gr-block::before,
+        #live-view > .gr-block::after,
+        #live-view > .gr-block > .gr-block,
+        #live-view > .gr-block > .gr-block::before,
+        #live-view > .gr-block > .gr-block::after,
+        #live-view .gr-group,
+        #live-view .gr-group::before,
+        #live-view .gr-group::after,
+        #live-view .gr-box,
+        #live-view .gr-box::before,
+        #live-view .gr-box::after,
+        #live-view .gr-panel,
+        #live-view .gr-panel::before,
+        #live-view .gr-panel::after,
+        #live-view .block,
+        #live-view .block::before,
+        #live-view .block::after,
+        #live-view .gradio-html,
+        #live-view .gr-row,
+        #live-view .gr-column,
+        #live-view .column,
+        #live-view .html-container,
+        #live-view .prose,
+        #live-page-inner,
+        #live-page-inner::before,
+        #live-page-inner::after,
+        #live-page-inner > .gr-block,
+        #live-page-inner > .gr-block::before,
+        #live-page-inner > .gr-block::after,
+        #live-page-inner > .gr-block > .gr-block,
+        #live-page-inner > .gr-block > .gr-block::before,
+        #live-page-inner > .gr-block > .gr-block::after,
+        #live-page-inner .gr-group,
+        #live-page-inner .gr-group::before,
+        #live-page-inner .gr-group::after,
+        #live-page-inner .gr-box,
+        #live-page-inner .gr-box::before,
+        #live-page-inner .gr-box::after,
+        #live-page-inner .gr-panel,
+        #live-page-inner .gr-panel::before,
+        #live-page-inner .gr-panel::after,
+        #live-page-inner .block,
+        #live-page-inner .block::before,
+        #live-page-inner .block::after {{
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: #0a0e1a !important;
+            border-color: #0a0e1a !important;
+            outline: none !important;
+        }}
+
+        #live-shell-header,
+        #live-layout-wrap,
+        #live-stage-column,
+        #live-panel-column,
+        #live-panel-html,
+        #live-stage-html,
+        #debug-panel-wrap,
+        #slots-json-output {{
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }}
+
+        #live-view.hide,
+        #live-view.hidden,
+        #live-view .hide,
+        #live-view .hidden {{
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            border: none !important;
+        }}
+
+        #live-layout-wrap.hide,
+        #live-layout-wrap.hidden,
+        #live-stage-column.hide,
+        #live-stage-column.hidden,
+        #live-panel-column.hide,
+        #live-panel-column.hidden,
+        #debug-panel-wrap.hide,
+        #debug-panel-wrap.hidden {{
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            border: none !important;
+        }}
+
+        #live-view .form.hidden,
+        #live-view .form.hide,
+        #live-view .wrap.hide,
+        #live-view .wrap.hidden {{
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            border: none !important;
+        }}
+
+        .live-page-shell {{
+            background:
+                radial-gradient(circle at 50% 0%, rgba(17, 24, 39, 0.52), transparent 48%),
+                linear-gradient(180deg, #0a0e1a 0%, #0a0e1a 100%) !important;
+        }}
+
         .live-layout {{
             display: grid !important;
             grid-template-columns: minmax(0, 1.5fr) minmax(360px, 0.9fr);
@@ -16,6 +139,7 @@ def build_live_css() -> str:
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
+            gap: 20px !important;
         }}
 
         #live-view .live-layout > .gr-block {{
@@ -29,6 +153,7 @@ def build_live_css() -> str:
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
+            min-height: 0 !important;
         }}
 
         #stage-shell,
