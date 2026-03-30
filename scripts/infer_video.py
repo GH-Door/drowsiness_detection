@@ -52,7 +52,12 @@ from src.tracking.slot import (
     sort_detections_reading_order,
     stabilize_bbox,
 )
-from src.teacher import DEFAULT_TEACHER_NAMES, TEACHER_STATE, resolve_teacher_names
+from src.teacher import (
+    DEFAULT_TEACHER_NAMES,
+    TEACHER_STATE,
+    resolve_display_name,
+    resolve_teacher_names,
+)
 from src.utils.loaders import load_env
 from src.utils.video_conversion import VideoReader, VideoWriter
 from src.visual.annotator import (
@@ -510,7 +515,10 @@ class ZoomPipeline:
                     "frame_idx": frame_idx,
                     "timestamp_s": round(ts, 4),
                     "slot_id": sid,
-                    "name": sl.name_final,
+                    "name": resolve_display_name(
+                        sl.name_final, sid, name_votes=sl.name_votes
+                    ),
+                    "ocr_name": sl.name_final,
                     "is_teacher": int(sl.is_teacher),
                     "final_state": TEACHER_STATE if sl.is_teacher else final_state,
                     "raw_state": TEACHER_STATE if sl.is_teacher else raw_state,
@@ -549,7 +557,10 @@ class ZoomPipeline:
                     "frame_idx": frame_idx,
                     "timestamp_s": round(ts, 4),
                     "slot_id": sid,
-                    "name": sl.name_final,
+                    "name": resolve_display_name(
+                        sl.name_final, sid, name_votes=sl.name_votes
+                    ),
+                    "ocr_name": sl.name_final,
                     "is_teacher": int(sl.is_teacher),
                     "final_state": "ABSENT",
                     "raw_state": "ABSENT",
@@ -589,7 +600,10 @@ class ZoomPipeline:
             rows.append(
                 {
                     "slot_id": sid,
-                    "name": sl.name_final,
+                    "name": resolve_display_name(
+                        sl.name_final, sid, name_votes=sl.name_votes
+                    ),
+                    "ocr_name": sl.name_final,
                     "name_conf": round(sl.name_conf, 4),
                     "total_frames": sl.total_frames,
                     "frames_normal": sl.frames_normal,

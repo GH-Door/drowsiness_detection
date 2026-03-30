@@ -12,7 +12,12 @@ import torch
 from ultralytics import YOLO
 
 from scripts.infer_video import PipelineConfig, ZoomPipeline
-from src.teacher import DEFAULT_TEACHER_NAMES, TEACHER_STATE, student_slots
+from src.teacher import (
+    DEFAULT_TEACHER_NAMES,
+    TEACHER_STATE,
+    resolve_display_name,
+    student_slots,
+)
 
 
 @dataclass
@@ -189,7 +194,10 @@ class LiveZoomEngine:
             slots.append(
                 SlotInfo(
                     slot_id=r["slot_id"],
-                    name=r["name"] or f"학생 {r['slot_id']}",
+                    name=resolve_display_name(
+                        r.get("ocr_name") or r.get("name"),
+                        r["slot_id"],
+                    ),
                     status=status,
                     class_name=r["cls_name"],
                     is_teacher=is_teacher,

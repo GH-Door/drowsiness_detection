@@ -110,7 +110,7 @@ def _sync_panel_state(snapshot: RuntimeSnapshot) -> None:
             continue
 
         sid = slot.slot_id
-        name = slot.name
+        name = slot.name or f"학생 {sid}"
         status = slot.status
         panel_status = "NORMAL" if status == "YAWN" else status
 
@@ -135,13 +135,13 @@ def _sync_panel_state(snapshot: RuntimeSnapshot) -> None:
         prev = PANEL_STATE["prev_statuses"].get(sid, "NORMAL")
         if prev != panel_status and panel_status != "NORMAL":
             now = time.time()
-            last_t = PANEL_STATE["last_alert_time"].get(name, 0)
+            last_t = PANEL_STATE["last_alert_time"].get(sid, 0)
             if now - last_t >= ALERT_COOLDOWN_SEC:
                 if panel_status == "DROWSY":
                     _push_alert("DROWSY", f"{name} 학생에게 졸음이 감지되었습니다.")
                 elif panel_status == "ABSENT":
                     _push_alert("ABSENT", f"{name} 학생이 자리를 이탈했습니다.")
-                PANEL_STATE["last_alert_time"][name] = now
+                PANEL_STATE["last_alert_time"][sid] = now
 
         PANEL_STATE["prev_statuses"][sid] = panel_status
 

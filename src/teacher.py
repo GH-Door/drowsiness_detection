@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any, Iterable, Sequence
 
 DEFAULT_TEACHER_NAMES: tuple[str, ...] = ("강경미",)
@@ -46,3 +47,31 @@ def is_teacher_name(
 
 def student_slots(slots: Iterable[Any]) -> list[Any]:
     return [slot for slot in slots if not bool(getattr(slot, "is_teacher", False))]
+
+
+def best_voted_name(name_votes: Sequence[str] | None = None) -> str:
+    normalized_votes = [normalize_person_name(name) for name in (name_votes or [])]
+    filtered_votes = [name for name in normalized_votes if name]
+    if not filtered_votes:
+        return ""
+    return Counter(filtered_votes).most_common(1)[0][0]
+
+
+def resolve_display_name(
+    preferred_name: str | None,
+    slot_id: int | None,
+    *,
+    name_votes: Sequence[str] | None = None,
+    fallback_prefix: str = "학생",
+) -> str:
+    normalized_name = normalize_person_name(preferred_name)
+    if normalized_name:
+        return normalized_name
+
+    voted_name = best_voted_name(name_votes)
+    if voted_name:
+        return voted_name
+
+    if slot_id is None:
+        return fallback_prefix
+    return f"{fallback_prefix} {slot_id}"
