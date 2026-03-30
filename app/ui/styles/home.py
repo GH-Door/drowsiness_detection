@@ -224,7 +224,7 @@ def build_home_css() -> str:
         #home-hero-section,
         .home-hero {
             position: relative;
-            padding: 0 24px 0;
+            padding: 40px 24px 0;
             display: flex;
             flex-direction: column;
             align-items: center;
