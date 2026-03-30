@@ -131,7 +131,7 @@ def build_home_footer_html() -> str:
 def build_stage_media_html(stage_media_url: str, stage_media_kind: str) -> str:
     if stage_media_kind == "video":
         return f"""
-        <video id="stage-bg-video" autoplay muted loop playsinline preload="metadata">
+        <video id="stage-bg-video" muted loop playsinline preload="metadata">
             <source src="{stage_media_url}" type="video/mp4">
         </video>
         """

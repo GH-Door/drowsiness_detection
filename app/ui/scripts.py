@@ -73,10 +73,45 @@ def build_head_script() -> str:
         clickHiddenButton("real-stop-btn");
     }}
 
+    function getStageBackgroundVideo() {{
+        const bgVideo = document.getElementById("stage-bg-video");
+        return (bgVideo && bgVideo.tagName === "VIDEO") ? bgVideo : null;
+    }}
+
+    async function startStageBackgroundVideo() {{
+        const bgVideo = getStageBackgroundVideo();
+        if (!bgVideo) return;
+
+        try {{
+            bgVideo.pause();
+            bgVideo.currentTime = 0;
+        }} catch (err) {{
+            console.warn("배경영상 초기화 실패:", err);
+        }}
+
+        try {{
+            await bgVideo.play();
+        }} catch (err) {{
+            console.warn("배경영상 재생 실패:", err);
+        }}
+    }}
+
+    function stopStageBackgroundVideo() {{
+        const bgVideo = getStageBackgroundVideo();
+        if (!bgVideo) return;
+
+        try {{
+            bgVideo.pause();
+            bgVideo.currentTime = 0;
+        }} catch (err) {{
+            console.warn("배경영상 정지 실패:", err);
+        }}
+    }}
+
     async function captureAndSubmitFrame() {{
         const state = overlayState();
         const webcam  = document.getElementById("student-cam");
-        const bgVideo = document.getElementById("stage-bg-video");
+        const bgVideo = getStageBackgroundVideo();
         const frameInput = queryBridgeInput("frame-data-input");
         const seqInput   = queryBridgeInput("frame-seq-input");
         const submitBtn  = queryBridgeButton("frame-submit-btn");
@@ -256,6 +291,8 @@ def build_head_script() -> str:
         if (!video) return;
 
         try {{
+            await startStageBackgroundVideo();
+
             if (video.srcObject && state.intervalId) return;
 
             const stream = await navigator.mediaDevices.getUserMedia({{
@@ -289,6 +326,7 @@ def build_head_script() -> str:
             }}
         }} catch (err) {{
             console.error("웹캠 시작 실패:", err);
+            stopStageBackgroundVideo();
             if (placeholder) {{
                 placeholder.innerText = "카메라 권한이 필요합니다.";
                 placeholder.style.display = "flex";
@@ -328,6 +366,15 @@ def build_head_script() -> str:
             placeholder.innerText = "Start 버튼을 눌러 카메라를 켜세요.";
             placeholder.style.display = "flex";
         }}
+
+        stopStageBackgroundVideo();
     }}
+
+    window.startStageBackgroundVideo = startStageBackgroundVideo;
+    window.stopStageBackgroundVideo = stopStageBackgroundVideo;
+
+    window.setTimeout(() => {{
+        stopStageBackgroundVideo();
+    }}, 0);
     </script>
     """
