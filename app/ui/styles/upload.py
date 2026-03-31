@@ -287,10 +287,28 @@ def build_upload_css() -> str:
 
         .upload-status-markdown,
         .upload-status-markdown p {
-            margin: 14px 0 0 !important;
-            color: rgba(226, 232, 240, 0.72) !important;
+            margin: 16px 0 0 !important;
+            color: #e2e8f0 !important;
             line-height: 1.7 !important;
             font-size: 14px !important;
+        }
+
+        .upload-status-markdown {
+            padding: 14px 16px !important;
+            border-radius: 16px !important;
+            border: 1px solid rgba(96, 165, 250, 0.20) !important;
+            background: rgba(37, 99, 235, 0.10) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+        }
+
+        .upload-status-markdown p {
+            margin: 0 !important;
+        }
+
+        #upload-view .pending,
+        #upload-view .generating,
+        #upload-view .progress-text {
+            color: #dbeafe !important;
         }
 
         .upload-info-card {

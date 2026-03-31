@@ -109,7 +109,7 @@ def _preview_upload_start_time(
     return f"{str(meridiem)} {int(hour_12):02d}:{int(minute):02d}"
 
 
-def _analyze_and_open_report(
+def _analyze_upload_only(
     file_path: str | None,
     class_start_time: str,
     progress=gr.Progress(track_tqdm=True),
@@ -118,7 +118,6 @@ def _analyze_and_open_report(
         file_path, class_start_time, progress
     )
     return (
-        *_view_updates("report"),
         report_data,
         render_report_html(report_data),
         status_text,
@@ -417,6 +416,12 @@ def create_demo() -> gr.Blocks:
                                 elem_classes=["upload-status-markdown"],
                             )
 
+                        gr.HTML(
+                            build_upload_tip_html(),
+                            elem_id="upload-tip-block",
+                            elem_classes=["upload-tip-wrap"],
+                        )
+
                     with gr.Column(
                         elem_id="upload-side-column",
                         elem_classes=["upload-side-column"],
@@ -482,12 +487,6 @@ def create_demo() -> gr.Blocks:
                             build_upload_feature_html(),
                             elem_id="upload-feature-block",
                             elem_classes=["upload-feature-wrap"],
-                        )
-
-                        gr.HTML(
-                            build_upload_tip_html(),
-                            elem_id="upload-tip-block",
-                            elem_classes=["upload-tip-wrap"],
                         )
 
         with gr.Group(
@@ -641,7 +640,7 @@ def create_demo() -> gr.Blocks:
             outputs=[upload_status],
             show_progress="hidden",
         ).then(
-            fn=lambda file_path, meridiem, hour, minute: _analyze_and_open_report(
+            fn=lambda file_path, meridiem, hour, minute: _analyze_upload_only(
                 file_path,
                 _compose_upload_start_time(meridiem, hour, minute),
             ),
@@ -652,14 +651,15 @@ def create_demo() -> gr.Blocks:
                 minute_dropdown,
             ],
             outputs=[
-                home_view,
-                live_view,
-                upload_view,
-                report_view,
                 report_state,
                 report_html,
                 upload_status,
             ],
+            show_progress="minimal",
+        ).then(
+            fn=_go_report,
+            outputs=[home_view, live_view, upload_view, report_view],
+            show_progress="hidden",
         )
 
     demo.demo_css = css

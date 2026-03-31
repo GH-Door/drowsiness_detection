@@ -760,12 +760,18 @@ def analyze_uploaded_video(
     output_video = output_dir / f"{video_path.stem}_report.mp4"
 
     progress(0.12, desc="기존 추론 파이프라인 초기화 중")
+
+    def _forward_inference_progress(ratio: float, desc: str) -> None:
+        clamped = max(0.0, min(1.0, float(ratio)))
+        progress(0.12 + (0.80 * clamped), desc=desc)
+
     track_summary = run_inference(
         input_path=video_path,
         checkpoint=YOLO_CHECKPOINT_PATH,
         output_path=output_video,
         fps=7.0,
         teacher_names=["강경미"],
+        progress_callback=_forward_inference_progress,
     )
 
     progress(0.92, desc="리포트 구성 중")

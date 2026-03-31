@@ -750,6 +750,7 @@ def run_inference(
     use_onnx: bool = False,
     onnx_path: str | Path | None = None,
     device: str | None = None,
+    progress_callback=None,
 ):
     """
     졸음 감지 파이프라인을 실행합니다.
@@ -853,6 +854,11 @@ def run_inference(
                     writer.write(canvas)
                     all_records.extend(records)
                     pbar.set_postfix({"ts": f"{ts:.1f}s", "dets": len(records)})
+                    if progress_callback is not None and total:
+                        progress_callback(
+                            pbar.n / total,
+                            f"분석 중 ({Path(input_path).name})",
+                        )
 
             track_summary = pipeline.get_track_summary()
 
