@@ -56,6 +56,26 @@ wandb/
 # gemini
 *GEMINI.md
 
+# figmaApp (Vite + React + TypeScript)
+figmaApp/node_modules/
+figmaApp/dist/
+figmaApp/.vite/
+
+# env locals
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
 # jupyter
 jupyter/
 
