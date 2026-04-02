@@ -73,10 +73,252 @@ def build_head_script() -> str:
         clickHiddenButton("real-stop-btn");
     }}
 
+    function setBridgeValue(rootId, value) {{
+        const input = queryBridgeInput(rootId);
+        if (!input) return;
+        setNativeValue(input, value);
+        input.dispatchEvent(new Event("input", {{ bubbles: true }}));
+        input.dispatchEvent(new Event("change", {{ bubbles: true }}));
+    }}
+
+    function setReportDownloadButtonsDisabled(disabled) {{
+        for (const button of Array.from(document.querySelectorAll(".report-download-btn"))) {{
+            button.disabled = disabled;
+            button.style.opacity = disabled ? "0.72" : "1";
+            button.style.pointerEvents = disabled ? "none" : "auto";
+            button.textContent = disabled ? "PDF 생성 중..." : "↓ 리포트 다운로드";
+        }}
+    }}
+
+    function tryAutoDownloadReportFile() {{
+        if (!window.__reportPendingAutoDownload) return false;
+
+        const root = document.getElementById("report-download-file");
+        if (!root) return false;
+
+        const link = root.querySelector("a[href]");
+        if (!link) return false;
+
+        const href = link.getAttribute("href");
+        if (!href || window.__lastAutoDownloadedReportHref === href) return false;
+
+        window.__lastAutoDownloadedReportHref = href;
+        window.__reportPendingAutoDownload = false;
+        link.click();
+        return true;
+    }}
+
+    function wait(ms) {{
+        return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }}
+
+    function loadExternalScript(url) {{
+        return new Promise((resolve, reject) => {{
+            const existing = document.querySelector(`script[data-codex-src="${{url}}"]`);
+            if (existing) {{
+                if (existing.dataset.loaded === "true") {{
+                    resolve();
+                    return;
+                }}
+                existing.addEventListener("load", () => resolve(), {{ once: true }});
+                existing.addEventListener("error", () => reject(new Error(`Failed to load ${{url}}`)), {{ once: true }});
+                return;
+            }}
+
+            const script = document.createElement("script");
+            script.src = url;
+            script.async = true;
+            script.dataset.codexSrc = url;
+            script.addEventListener("load", () => {{
+                script.dataset.loaded = "true";
+                resolve();
+            }}, {{ once: true }});
+            script.addEventListener("error", () => reject(new Error(`Failed to load ${{url}}`)), {{ once: true }});
+            document.head.appendChild(script);
+        }});
+    }}
+
+    async function loadHtml2CanvasLibrary() {{
+        if (window.html2canvas) return window.html2canvas;
+
+        const sources = [
+            "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",
+            "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js",
+        ];
+
+        let lastError = null;
+        for (const source of sources) {{
+            try {{
+                await loadExternalScript(source);
+                if (window.html2canvas) {{
+                    return window.html2canvas;
+                }}
+            }} catch (error) {{
+                lastError = error;
+            }}
+        }}
+
+        throw lastError || new Error("html2canvas 라이브러리를 불러오지 못했습니다.");
+    }}
+
+    function canvasSliceToDataUrl(sourceCanvas, topPx, sliceHeightPx) {{
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = sourceCanvas.width;
+        sliceCanvas.height = sliceHeightPx;
+
+        const context = sliceCanvas.getContext("2d");
+        context.drawImage(
+            sourceCanvas,
+            0,
+            topPx,
+            sourceCanvas.width,
+            sliceHeightPx,
+            0,
+            0,
+            sourceCanvas.width,
+            sliceHeightPx
+        );
+
+        return sliceCanvas.toDataURL("image/jpeg", 0.96);
+    }}
+
+    async function captureReportForPdf() {{
+        if (window.__reportCaptureBusy) return;
+
+        const target = document.getElementById("report-capture-root");
+        if (!target) {{
+            console.error("리포트 캡처 대상을 찾을 수 없습니다.");
+            return;
+        }}
+
+        window.__reportCaptureBusy = true;
+        setReportDownloadButtonsDisabled(true);
+
+        try {{
+            await wait(700);
+            const html2canvas = await loadHtml2CanvasLibrary();
+            const width = Math.ceil(target.scrollWidth || target.clientWidth || target.offsetWidth);
+            const totalHeight = Math.ceil(target.scrollHeight || target.clientHeight || target.offsetHeight);
+            const pixelRatio = Math.max(1, Math.min(window.devicePixelRatio || 1.5, 2));
+
+            const renderedCanvas = await html2canvas(target, {{
+                backgroundColor: "#0a0e1a",
+                scale: pixelRatio,
+                useCORS: true,
+                logging: false,
+                width,
+                height: totalHeight,
+                windowWidth: Math.max(document.documentElement.clientWidth, width),
+                windowHeight: Math.max(document.documentElement.clientHeight, totalHeight),
+                scrollX: 0,
+                scrollY: -window.scrollY,
+                onclone: (clonedDocument) => {{
+                    for (const node of Array.from(clonedDocument.querySelectorAll(".report-animate"))) {{
+                        node.style.opacity = "1";
+                        node.style.transform = "none";
+                        node.style.animation = "none";
+                        node.style.transition = "none";
+                    }}
+                }},
+            }});
+
+            const slices = [];
+            const sliceCssHeight = 1400;
+            const slicePixelHeight = Math.max(1, Math.round(sliceCssHeight * pixelRatio));
+            for (let offsetPx = 0; offsetPx < renderedCanvas.height; offsetPx += slicePixelHeight) {{
+                const currentSlicePixelHeight = Math.min(
+                    slicePixelHeight,
+                    renderedCanvas.height - offsetPx
+                );
+                const dataUrl = canvasSliceToDataUrl(
+                    renderedCanvas,
+                    offsetPx,
+                    currentSlicePixelHeight
+                );
+                const cssOffsetY = Math.round(offsetPx / pixelRatio);
+                const cssSliceHeight = Math.round(currentSlicePixelHeight / pixelRatio);
+                slices.push({{
+                    index: slices.length,
+                    offset_y: cssOffsetY,
+                    width: renderedCanvas.width,
+                    height: currentSlicePixelHeight,
+                    css_width: width,
+                    css_height: cssSliceHeight,
+                    data_url: dataUrl,
+                }});
+            }}
+
+            setBridgeValue(
+                "report-capture-payload",
+                JSON.stringify({{
+                    title: target.dataset.reportTitle || "report",
+                    captured_at: new Date().toISOString(),
+                    slices,
+                }})
+            );
+            await wait(120);
+            window.__reportPendingAutoDownload = true;
+            clickHiddenButton("report-download-submit-btn");
+        }} catch (error) {{
+            console.error("리포트 PDF 캡처 실패:", error);
+            window.__reportPendingAutoDownload = false;
+            window.alert("리포트 PDF 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        }} finally {{
+            setReportDownloadButtonsDisabled(false);
+            window.__reportCaptureBusy = false;
+        }}
+    }}
+
+    window.captureReportForPdf = captureReportForPdf;
+    window.tryAutoDownloadReportFile = tryAutoDownloadReportFile;
+
+    const reportDownloadObserver = new MutationObserver(() => {{
+        tryAutoDownloadReportFile();
+    }});
+    reportDownloadObserver.observe(document.documentElement, {{
+        childList: true,
+        subtree: true,
+    }});
+
+    function getStageBackgroundVideo() {{
+        const bgVideo = document.getElementById("stage-bg-video");
+        return (bgVideo && bgVideo.tagName === "VIDEO") ? bgVideo : null;
+    }}
+
+    async function startStageBackgroundVideo() {{
+        const bgVideo = getStageBackgroundVideo();
+        if (!bgVideo) return;
+
+        try {{
+            bgVideo.pause();
+            bgVideo.currentTime = 0;
+        }} catch (err) {{
+            console.warn("배경영상 초기화 실패:", err);
+        }}
+
+        try {{
+            await bgVideo.play();
+        }} catch (err) {{
+            console.warn("배경영상 재생 실패:", err);
+        }}
+    }}
+
+    function stopStageBackgroundVideo() {{
+        const bgVideo = getStageBackgroundVideo();
+        if (!bgVideo) return;
+
+        try {{
+            bgVideo.pause();
+            bgVideo.currentTime = 0;
+        }} catch (err) {{
+            console.warn("배경영상 정지 실패:", err);
+        }}
+    }}
+
     async function captureAndSubmitFrame() {{
         const state = overlayState();
         const webcam  = document.getElementById("student-cam");
-        const bgVideo = document.getElementById("stage-bg-video");
+        const bgVideo = getStageBackgroundVideo();
         const frameInput = queryBridgeInput("frame-data-input");
         const seqInput   = queryBridgeInput("frame-seq-input");
         const submitBtn  = queryBridgeButton("frame-submit-btn");
@@ -161,14 +403,14 @@ def build_head_script() -> str:
     const BBOX_COLORS = {{
         NORMAL: "rgba(70,  220, 70,  0.90)",
         DROWSY: "rgba(255, 0,   0,   0.95)",
-        YAWN:   "rgba(255, 128, 0,   0.90)",
         ABSENT: "rgba(255, 165, 0,   0.95)",
         IGNORE: "rgba(160, 160, 160, 0.85)",
     }};
     const NOFACE_COLOR = "rgba(160, 160, 160, 0.85)";
+    const TEACHER_COLOR = "rgba(160, 160, 160, 0.90)";
 
     const STATUS_KO = {{
-        NORMAL: "정상", DROWSY: "졸음", YAWN: "하품", ABSENT: "이탈",
+        NORMAL: "정상", DROWSY: "졸음", ABSENT: "이탈",
     }};
 
     function drawBboxOverlay(slots) {{
@@ -196,12 +438,15 @@ def build_head_script() -> str:
             const w = (x2p - x1p) * rect.width;
             const h = (y2p - y1p) * rect.height;
             if (w < 4 || h < 4) continue;
+            const isTeacher = Boolean(s.is_teacher);
 
-            // YAWN은 bbox에 표시하지 않음 (대시보드/CSV에는 유지) → NORMAL로 보여줌
+            // YAWN은 실시간 화면에서 NORMAL로 보여줌
             const uiStatus = (s.status === "YAWN") ? "NORMAL" : s.status;
             // infer_video.py 동일 로직: noface면 status 무시, NOT FOUND 표시
-            const displayState = s.noface ? "NOT FOUND" : uiStatus;
-            const color = s.noface ? NOFACE_COLOR : (BBOX_COLORS[uiStatus] || BBOX_COLORS.NORMAL);
+            const displayState = isTeacher ? "" : (s.noface ? "NOT FOUND" : uiStatus);
+            const color = isTeacher
+                ? TEACHER_COLOR
+                : (s.noface ? NOFACE_COLOR : (BBOX_COLORS[uiStatus] || BBOX_COLORS.NORMAL));
             const lw = (displayState === "DROWSY" || displayState === "ABSENT") ? 3 : 2;
 
             // bbox 테두리
@@ -210,19 +455,21 @@ def build_head_script() -> str:
             ctx.strokeRect(x, y, w, h);
 
             // 상단 안쪽 라벨: infer_video.py와 동일하게 noface면 "NOT FOUND"로 대체
-            const label = `ID${{s.slot_id}}  ${{displayState}}`;
-            ctx.font = "bold 11px monospace";
-            const tw = ctx.measureText(label).width;
-            const lh = 17;
+            if (!isTeacher) {{
+                const label = `ID${{s.slot_id}}  ${{displayState}}`;
+                ctx.font = "bold 11px monospace";
+                const tw = ctx.measureText(label).width;
+                const lh = 17;
 
-            // 라벨 배경은 bbox 상단 안쪽에
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, tw + 10, lh);
-            ctx.fillStyle = "#fff";
-            ctx.fillText(label, x + 5, y + lh - 4);
+                // 라벨 배경은 bbox 상단 안쪽에
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, tw + 10, lh);
+                ctx.fillStyle = "#fff";
+                ctx.fillText(label, x + 5, y + lh - 4);
+            }}
 
             // FaceMesh face_box inner box (마젠타 점선)
-            if (s.face_box_pct && s.face_box_pct.length === 4) {{
+            if (!isTeacher && s.face_box_pct && s.face_box_pct.length === 4) {{
                 const [fx1p, fy1p, fx2p, fy2p] = s.face_box_pct;
                 const fx = fx1p * rect.width;
                 const fy = fy1p * rect.height;
@@ -251,6 +498,8 @@ def build_head_script() -> str:
         if (!video) return;
 
         try {{
+            await startStageBackgroundVideo();
+
             if (video.srcObject && state.intervalId) return;
 
             const stream = await navigator.mediaDevices.getUserMedia({{
@@ -284,6 +533,7 @@ def build_head_script() -> str:
             }}
         }} catch (err) {{
             console.error("웹캠 시작 실패:", err);
+            stopStageBackgroundVideo();
             if (placeholder) {{
                 placeholder.innerText = "카메라 권한이 필요합니다.";
                 placeholder.style.display = "flex";
@@ -291,7 +541,7 @@ def build_head_script() -> str:
         }}
     }}
 
-    function stopOverlayCamera() {{
+    function stopOverlayCamera(deferTrackStop = false) {{
         const state = overlayState();
         const video = document.getElementById("student-cam");
         const placeholder = document.getElementById("cam-placeholder");
@@ -305,17 +555,33 @@ def build_head_script() -> str:
         state.inFlightSeq = 0;
 
         const stream = video.srcObject;
-        if (stream) {{
-            stream.getTracks().forEach(track => track.stop());
-        }}
-
         video.pause();
         video.srcObject = null;
+
+        if (stream) {{
+            const stopTracks = () => {{
+                stream.getTracks().forEach(track => track.stop());
+            }};
+            if (deferTrackStop) {{
+                window.setTimeout(stopTracks, 0);
+            }} else {{
+                stopTracks();
+            }}
+        }}
 
         if (placeholder) {{
             placeholder.innerText = "Start 버튼을 눌러 카메라를 켜세요.";
             placeholder.style.display = "flex";
         }}
+
+        stopStageBackgroundVideo();
     }}
+
+    window.startStageBackgroundVideo = startStageBackgroundVideo;
+    window.stopStageBackgroundVideo = stopStageBackgroundVideo;
+
+    window.setTimeout(() => {{
+        stopStageBackgroundVideo();
+    }}, 0);
     </script>
     """
