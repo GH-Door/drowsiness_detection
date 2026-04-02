@@ -22,7 +22,9 @@ wheels/
 jupyter/.ipynb_checkpoints/
 
 # dataset
-/data
+/data/images
+/data/labels
+/data/video
 *.mp4
 
 # mediapipe models
