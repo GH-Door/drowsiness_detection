@@ -22,6 +22,7 @@ wheels/
 jupyter/.ipynb_checkpoints/
 
 # dataset
+data
 data/
 *.mp4
 
