@@ -27,6 +27,9 @@ jupyter/.ipynb_checkpoints/
 /data/video
 *.mp4
 
+# assets
+/assets/demo_bg.png
+
 # mediapipe models
 *.task
 
